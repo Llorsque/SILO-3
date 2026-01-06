@@ -208,41 +208,51 @@ body{
 .dropdown__item--muted{color: rgba(255,255,255,.55); cursor:default}
 
 
-/* Medal summary cards (Kampioenen) */
-.medalSummaryWrap{
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-}
-.medalCard{
+/* Biografie */
+.bioProfileWrap{display:block}
+.bioProfileCard{
   border:1px solid var(--line);
   background: rgba(255,255,255,.02);
   border-radius:18px;
-  padding:14px 14px 12px;
-  min-width: 260px;
+  padding:16px;
 }
-.medalCard__title{
-  font-weight:1000;
-  color: rgba(255,255,255,.78);
-  margin-bottom:10px;
-}
-.medalCard__row{
+.bioProfileTop{
   display:flex;
   gap:16px;
-  align-items:center;
-  margin-bottom:10px;
+  align-items:flex-start;
+  flex-wrap:wrap;
 }
-.medalCard__item{
+.bioPhoto{
+  width:120px;
+  height:120px;
+  border-radius:18px;
+  border:1px dashed rgba(255,255,255,.18);
+  background: rgba(0,0,0,.20);
   display:flex;
   align-items:center;
-  gap:8px;
-  font-weight:1000;
+  justify-content:center;
+  color: rgba(255,255,255,.55);
+  font-weight:900;
 }
-.medalCard__num{
-  font-size:22px;
-  letter-spacing:.02em;
+.bioMeta{flex:1; min-width:260px}
+.bioName{font-weight:1000; font-size:20px; margin-bottom:10px}
+.bioGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap:12px;
 }
-.medalCard__sub{
-  color: var(--muted);
-  font-weight:800;
+@media(max-width: 900px){
+  .bioGrid{grid-template-columns: 1fr;}
 }
+.bioField{
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+  border-radius:14px;
+  padding:10px 12px;
+}
+.bioLabel{font-weight:1000; font-size:12px; color: rgba(255,255,255,.65); margin-bottom:6px}
+.bioValue{font-weight:800}
+.bioValue--muted{color: rgba(255,255,255,.55)}
+.bioNotable{margin-top:6px}
+.bioResultsHeader{display:flex; align-items:center; justify-content:space-between; margin:8px 0 10px}
+.bioResultsTitle{font-weight:1000; color: rgba(255,255,255,.85)}
