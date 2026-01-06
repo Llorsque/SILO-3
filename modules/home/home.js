@@ -65,7 +65,7 @@ export function mountHome(root){
     menuBtn("Head-to-Head", "Nog leeg", "headtohead"),
     menuBtn("Kampioenen", "Nog leeg", "champions"),
     menuBtn("Biografie", "Nog leeg", "biography"),
-    menuBtn("Overig", "Nog leeg (later data controle)", "settings"),
+    menuBtn("A Final presentation", "Nog leeg", "finalpresentation"),
   ]);
 
   root.appendChild(controls);

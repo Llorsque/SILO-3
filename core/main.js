@@ -8,6 +8,7 @@ import { mountHeadToHead } from "../modules/headtohead/headtohead.js";
 import { mountChampions } from "../modules/champions/champions.js";
 import { mountBiography } from "../modules/biography/biography.js";
 import { mountSettings } from "../modules/settings/settings.js";
+import { mountFinalPresentation } from "../modules/finalpresentation/finalpresentation.js";
 
 const root = document.getElementById("appRoot");
 
@@ -34,6 +35,7 @@ router.register("headtohead", safeMount(mountHeadToHead, "headtohead"));
 router.register("champions", safeMount(mountChampions, "champions"));
 router.register("biography", safeMount(mountBiography, "biography"));
 router.register("settings", safeMount(mountSettings, "settings"));
+router.register("finalpresentation", safeMount(mountFinalPresentation, "finalpresentation"));
 
 document.getElementById("btnGoHome").addEventListener("click", () => router.go("home"));
 document.getElementById("btnGoSettings").addEventListener("click", () => router.go("settings"));
