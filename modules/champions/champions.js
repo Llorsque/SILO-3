@@ -122,6 +122,7 @@ export async function mountChampions(root){
     years: new Set(),        // multi (Seizoen)
     distances: new Set(),    // multi
     sexes: new Set(),        // multi (man/vrouw)
+    medals: new Set(),       // multi (1/2/3)
     rider: ""                // single
   };
 
@@ -160,6 +161,7 @@ export async function mountChampions(root){
       if(state.years.size && !state.years.has(r.season)) return false;
       if(state.distances.size && !state.distances.has(r.distance)) return false;
       if(state.sexes.size && !state.sexes.has(r.sex)) return false;
+      if(state.medals.size && !state.medals.has(r.pos)) return false;
       if(state.rider && r.skaterName !== state.rider) return false;
 
       // champions: top 3 only
@@ -228,6 +230,7 @@ export async function mountChampions(root){
     state.years.clear();
     state.distances.clear();
     state.sexes.clear();
+    state.medals.clear();
     state.rider = "";
     render();
   });
@@ -293,6 +296,16 @@ export async function mountChampions(root){
         ])
       ]),
       el("div", { class:"divider" }),
+      el("div", { class:"filterGroup" }, [
+        el("div", { class:"filterLabel" }, "Medailles"),
+        el("div", { class:"chipRow" }, [
+          chip("All", state.medals.size === 0, ()=>{ state.medals.clear(); render(); }),
+          chip("🥇 Goud", state.medals.has(1), ()=>{ normalizeSetToggle(state.medals, 1); render(); }),
+          chip("🥈 Zilver", state.medals.has(2), ()=>{ normalizeSetToggle(state.medals, 2); render(); }),
+          chip("🥉 Brons", state.medals.has(3), ()=>{ normalizeSetToggle(state.medals, 3); render(); }),
+        ])
+      ]),
+      el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:260px; flex:1" }, [
         el("div", { class:"filterLabel" }, "Rijder"),
         (() => {
@@ -325,8 +338,9 @@ export async function mountChampions(root){
     const ySel = state.years.size ? Array.from(state.years).sort((a,b)=>a-b).join(", ") : "alle seizoenen";
     const dSel = state.distances.size ? Array.from(state.distances).join(", ") : "alle afstanden";
     const sSel = state.sexes.size ? Array.from(state.sexes).join(" & ") : "alle";
+    const mSel = state.medals.size ? Array.from(state.medals).sort((a,b)=>a-b).map(p=>p===1?"goud":p===2?"zilver":"brons").join(", ") : "alle medailles";
     const rSel = state.rider ? `• ${state.rider}` : "";
-    summary.textContent = `${tSel.join(" / ")} • ${ySel} • ${dSel} • ${sSel}${rSel}`;
+    summary.textContent = `${tSel.join(" / ")} • ${ySel} • ${dSel} • ${sSel} • ${mSel}${rSel}`;
 
     // Table
     if(!rows.length){
