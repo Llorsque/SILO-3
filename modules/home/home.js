@@ -41,8 +41,8 @@ export function mountHome(root){
     }
   });
 
-  btnClear.addEventListener("click", ()=>{
-    clearDataset();
+  btnClear.addEventListener("click", async ()=>{
+    await clearDataset();
     router.go("home");
   });
 

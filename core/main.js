@@ -14,8 +14,21 @@ const root = document.getElementById("appRoot");
 
 function safeMount(fn, route){
   return () => {
-    try{ fn(root); }
-    catch(err){
+    try{
+      const out = fn(root);
+      if(out && typeof out.then === "function"){
+        out.catch((err) => {
+          console.error("[SILO] Module crash (async):", route, err);
+          clear(root);
+          root.appendChild(el("div", { class:"card" }, [
+            el("div", { class:"card__title" }, "Module crash"),
+            el("div", { class:"card__sub" }, `Route: ${route}`),
+            el("div", { class:"hr" }),
+            el("pre", { class:"notice", style:"white-space:pre-wrap" }, (err?.stack || String(err)))
+          ]));
+        });
+      }
+    }catch(err){
       console.error("[SILO] Module crash:", route, err);
       clear(root);
       root.appendChild(el("div", { class:"card" }, [

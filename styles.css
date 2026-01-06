@@ -105,3 +105,104 @@ body{
   outline:none;
 }
 .input:focus{border-color: rgba(82,232,232,.45)}
+
+
+/* --- Champions & shared UI --- */
+.chipRow{display:flex; gap:10px; flex-wrap:wrap}
+.chip{
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  color:var(--text);
+  padding:10px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:900;
+}
+.chip:hover{border-color: rgba(82,232,232,.35)}
+.chip--on{
+  border-color: rgba(82,232,232,.55);
+  box-shadow: 0 0 0 3px rgba(82,232,232,.10) inset;
+  background: rgba(82,232,232,.08);
+}
+
+.filtersCard{
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.02);
+  border-radius:18px;
+  padding:14px;
+}
+.filtersRow{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.filterGroup{display:flex; flex-direction:column; gap:10px; min-width:220px}
+.filterLabel{font-weight:1000; color:rgba(255,255,255,.72); font-size:12px; letter-spacing:.02em}
+.divider{
+  width:1px;
+  background: var(--line);
+  align-self:stretch;
+  opacity:.65;
+}
+@media(max-width: 900px){
+  .divider{display:none}
+  .filterGroup{min-width: 100%}
+}
+
+.summaryTitle{
+  font-weight:1000;
+  color: rgba(255,255,255,.85);
+  font-size:13px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background: rgba(0,0,0,.20);
+}
+
+.tableWrap{overflow:auto}
+.dataTable{
+  width:100%;
+  border-collapse:collapse;
+  min-width: 860px;
+}
+.dataTable th{
+  text-align:left;
+  font-size:12px;
+  color: rgba(255,255,255,.65);
+  font-weight:1000;
+  padding:12px 10px;
+  border-bottom:1px solid var(--line);
+}
+.dataTable td{
+  padding:14px 10px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  font-weight:700;
+}
+.dataTable tr:hover td{
+  background: rgba(255,255,255,.02);
+}
+.medal{font-size:18px}
+
+/* Typeable dropdown */
+.dropdown{position:relative}
+.dropdown__list{
+  position:absolute; left:0; right:0; top: calc(100% + 8px);
+  border:1px solid var(--line);
+  background: rgba(10,14,24,.95);
+  border-radius:14px;
+  max-height:280px;
+  overflow:auto;
+  padding:6px;
+  display:none;
+  z-index:50;
+}
+.dropdown__list--open{display:block}
+.dropdown__item{
+  padding:10px 10px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:800;
+}
+.dropdown__item:hover{background: rgba(82,232,232,.08)}
+.dropdown__item--muted{color: rgba(255,255,255,.55); cursor:default}
