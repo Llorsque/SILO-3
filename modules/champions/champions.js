@@ -239,10 +239,12 @@ export async function mountChampions(root){
 
   const filtersWrap = el("div", { class:"filtersCard" });
 
+  const medalSummaryWrap = el("div", { class:"medalSummaryWrap" });
   const tableWrap = el("div", { class:"tableWrap" });
 
   function render(){
     clear(filtersWrap);
+    clear(medalSummaryWrap);
     clear(tableWrap);
 
     // Build rows based on current tournament selection for dynamic years/distances/rider lists
@@ -342,6 +344,40 @@ export async function mountChampions(root){
     const rSel = state.rider ? `• ${state.rider}` : "";
     summary.textContent = `${tSel.join(" / ")} • ${ySel} • ${dSel} • ${sSel} • ${mSel}${rSel}`;
 
+
+    // Medal summary cards (only when a specific rider is selected)
+    if(state.rider){
+      const tournamentsToShow = state.tournaments.size ? Array.from(state.tournaments) : [];
+      if(!tournamentsToShow.length){
+        medalSummaryWrap.appendChild(el("div", { class:"notice" }, "Selecteer ook een wedstrijd om het medaille-overzicht te zien."));
+      }else{
+        // Count medals for this rider within current selection, per tournament
+        // Use deduped rows (unique medal per category+pos)
+        const byT = new Map();
+        for(const r of rows){
+          if(!tournamentsToShow.includes(r.tournament)) continue;
+          const cur = byT.get(r.tournament) || { gold:0, silver:0, bronze:0, total:0 };
+          if(r.pos === 1) cur.gold += 1;
+          if(r.pos === 2) cur.silver += 1;
+          if(r.pos === 3) cur.bronze += 1;
+          cur.total += 1;
+          byT.set(r.tournament, cur);
+        }
+        for(const t of tournamentsToShow){
+          const c = byT.get(t) || { gold:0, silver:0, bronze:0, total:0 };
+          medalSummaryWrap.appendChild(el("div", { class:"medalCard" }, [
+            el("div", { class:"medalCard__title" }, t),
+            el("div", { class:"medalCard__row" }, [
+              el("div", { class:"medalCard__item" }, ["🥇", el("span", { class:"medalCard__num" }, String(c.gold))]),
+              el("div", { class:"medalCard__item" }, ["🥈", el("span", { class:"medalCard__num" }, String(c.silver))]),
+              el("div", { class:"medalCard__item" }, ["🥉", el("span", { class:"medalCard__num" }, String(c.bronze))]),
+            ]),
+            el("div", { class:"medalCard__sub" }, `${c.total} medailles`)
+          ]));
+        }
+      }
+    }
+
     // Table
     if(!rows.length){
       tableWrap.appendChild(el("div", { class:"notice" }, "Geen resultaten met deze selectie."));
@@ -387,6 +423,8 @@ export async function mountChampions(root){
       el("div", { class:"row" }, [header]),
       el("div", { style:"height:10px" }),
       filtersWrap,
+      el("div", { style:"height:12px" }),
+      medalSummaryWrap,
       el("div", { style:"height:12px" }),
       summary,
       el("div", { style:"height:10px" }),

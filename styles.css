@@ -206,3 +206,43 @@ body{
 }
 .dropdown__item:hover{background: rgba(82,232,232,.08)}
 .dropdown__item--muted{color: rgba(255,255,255,.55); cursor:default}
+
+
+/* Medal summary cards (Kampioenen) */
+.medalSummaryWrap{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.medalCard{
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.02);
+  border-radius:18px;
+  padding:14px 14px 12px;
+  min-width: 260px;
+}
+.medalCard__title{
+  font-weight:1000;
+  color: rgba(255,255,255,.78);
+  margin-bottom:10px;
+}
+.medalCard__row{
+  display:flex;
+  gap:16px;
+  align-items:center;
+  margin-bottom:10px;
+}
+.medalCard__item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:1000;
+}
+.medalCard__num{
+  font-size:22px;
+  letter-spacing:.02em;
+}
+.medalCard__sub{
+  color: var(--muted);
+  font-weight:800;
+}
