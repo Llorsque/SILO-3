@@ -3,6 +3,19 @@ import { sectionCard } from "../../core/layout.js";
 import { router } from "../../core/router.js";
 import { loadDataset, loadMeta } from "../../core/storage.js";
 
+function chip(label, active, onClick){
+  const b = el("button", { type:"button", class: active ? "chip chip--on" : "chip" }, label);
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function medalIcon(pos){
+  if(pos === 1) return "🥇";
+  if(pos === 2) return "🥈";
+  if(pos === 3) return "🥉";
+  return "";
+}
+
 function normalizeSpaces(s){ return String(s ?? "").replace(/\s+/g, " ").trim(); }
 
 function fmtDate(iso){
@@ -101,7 +114,7 @@ export async function mountBiography(root){
       .filter(Boolean)
   )).sort((a,b)=>a.localeCompare(b));
 
-  const state = { rider: "" };
+  const state = { rider: "", tournaments: new Set(), years: new Set(), distances: new Set(), podium: new Set() };
 
   const header = el("div", { class:"row", style:"align-items:flex-end; gap:12px" }, [
     el("div", null, [
@@ -111,10 +124,11 @@ export async function mountBiography(root){
     el("div", { class:"spacer" }),
     el("button", { class:"btn", type:"button" }, "Reset")
   ]);
-  header.querySelector("button").addEventListener("click", ()=>{ state.rider=""; render(); });
+  header.querySelector("button").addEventListener("click", ()=>{ state.rider=""; state.tournaments.clear(); state.years.clear(); state.distances.clear(); state.podium.clear(); render(); });
 
   const filterCard = el("div", { class:"filtersCard" });
   const profileWrap = el("div", { class:"bioProfileWrap" });
+  const resultsFilterWrap = el("div", { class:"filtersCard" });
   const resultsWrap = el("div", { class:"tableWrap" });
 
   function findWTNameByNat(nat){
@@ -136,6 +150,7 @@ export async function mountBiography(root){
   function render(){
     clear(filterCard);
     clear(profileWrap);
+    clear(resultsFilterWrap);
     clear(resultsWrap);
 
     // Filter UI
@@ -198,8 +213,58 @@ export async function mountBiography(root){
     profileWrap.appendChild(profile);
 
     // Results for rider
-    const rows = resultsAll
-      .filter(r => r.skaterName === state.rider)
+    const allRiderRows = resultsAll
+      .filter(r => r.skaterName === state.rider);
+
+    // Build filter options from rider rows
+    const tOptions = Array.from(new Set(allRiderRows.map(r => r.tournament).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    const yOptions = Array.from(new Set(allRiderRows.map(r => r.season).filter(Boolean))).sort((a,b)=>a-b);
+    const dOptions = Array.from(new Set(allRiderRows.map(r => r.distance).filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b)));
+
+    // Results filters UI
+    const rfRow = el("div", { class:"filtersRow" }, [
+      el("div", { class:"filterGroup", style:"min-width:260px" }, [
+        el("div", { class:"filterLabel" }, "Toernooi"),
+        el("div", { class:"chipRow" }, [
+          chip("All", state.tournaments.size === 0, ()=>{ state.tournaments.clear(); render(); }),
+          ...tOptions.map(t => chip(tournamentShort(t), state.tournaments.has(t), ()=>{ if(state.tournaments.has(t)) state.tournaments.delete(t); else state.tournaments.add(t); render(); }))
+        ])
+      ]),
+      el("div", { class:"divider" }),
+      el("div", { class:"filterGroup", style:"min-width:260px" }, [
+        el("div", { class:"filterLabel" }, "Seizoen"),
+        el("div", { class:"chipRow" }, [
+          chip("All", state.years.size === 0, ()=>{ state.years.clear(); render(); }),
+          ...yOptions.map(y => chip(String(y), state.years.has(y), ()=>{ if(state.years.has(y)) state.years.delete(y); else state.years.add(y); render(); }))
+        ])
+      ]),
+      el("div", { class:"divider" }),
+      el("div", { class:"filterGroup", style:"min-width:260px" }, [
+        el("div", { class:"filterLabel" }, "Afstand"),
+        el("div", { class:"chipRow" }, [
+          chip("All", state.distances.size === 0, ()=>{ state.distances.clear(); render(); }),
+          ...dOptions.map(d => chip(String(d), state.distances.has(d), ()=>{ if(state.distances.has(d)) state.distances.delete(d); else state.distances.add(d); render(); }))
+        ])
+      ]),
+      el("div", { class:"divider" }),
+      el("div", { class:"filterGroup" }, [
+        el("div", { class:"filterLabel" }, "Podium"),
+        el("div", { class:"chipRow" }, [
+          chip("All", state.podium.size === 0, ()=>{ state.podium.clear(); render(); }),
+          chip("🥇", state.podium.has(1), ()=>{ if(state.podium.has(1)) state.podium.delete(1); else state.podium.add(1); render(); }),
+          chip("🥈", state.podium.has(2), ()=>{ if(state.podium.has(2)) state.podium.delete(2); else state.podium.add(2); render(); }),
+          chip("🥉", state.podium.has(3), ()=>{ if(state.podium.has(3)) state.podium.delete(3); else state.podium.add(3); render(); }),
+        ])
+      ])
+    ]);
+
+    resultsFilterWrap.appendChild(rfRow);
+
+    const rows = allRiderRows
+      .filter(r => (state.tournaments.size ? state.tournaments.has(r.tournament) : true))
+      .filter(r => (state.years.size ? state.years.has(r.season) : true))
+      .filter(r => (state.distances.size ? state.distances.has(r.distance) : true))
+      .filter(r => (state.podium.size ? state.podium.has(r.pos) : true))
       .sort((a,b)=>{
         const da = a.dateISO ? new Date(a.dateISO).getTime() : 0;
         const db = b.dateISO ? new Date(b.dateISO).getTime() : 0;
@@ -229,7 +294,7 @@ export async function mountBiography(root){
         el("td", null, String(r.season || "")),
         el("td", null, r.distance || ""),
         el("td", null, r.runRaw || ""),
-        el("td", null, String(r.pos || "")),
+        el("td", null, r.pos ? `${medalIcon(r.pos)} ${r.pos}`.trim() : ""),
         el("td", null, r.locatie || ""),
         el("td", null, fmtDate(r.dateISO)),
       ]));
@@ -250,6 +315,8 @@ export async function mountBiography(root){
       filterCard,
       el("div", { style:"height:12px" }),
       profileWrap,
+      el("div", { style:"height:12px" }),
+      resultsFilterWrap,
       el("div", { style:"height:12px" }),
       resultsWrap
     ]
