@@ -458,6 +458,7 @@ export async function mountHeadToHead(root){
 
       pairwiseWrap.appendChild(table);
     }
+  }
 
   render();
 }
