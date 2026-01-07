@@ -15,12 +15,17 @@ const root = document.getElementById("appRoot");
 function safeMount(fn, route){
   return () => {
     try{
-      const out = fn(root);
+      clear(root);
+      const pageRoot = el("div", { class:"page" });
+      root.appendChild(pageRoot);
+      const out = fn(pageRoot);
       if(out && typeof out.then === "function"){
         out.catch((err) => {
           console.error("[SILO] Module crash (async):", route, err);
           clear(root);
-          root.appendChild(el("div", { class:"card" }, [
+          const pageRoot = el("div", { class:"page" });
+          root.appendChild(pageRoot);
+          pageRoot.appendChild(el("div", { class:"card" }, [
             el("div", { class:"card__title" }, "Module crash"),
             el("div", { class:"card__sub" }, `Route: ${route}`),
             el("div", { class:"hr" }),
@@ -31,7 +36,9 @@ function safeMount(fn, route){
     }catch(err){
       console.error("[SILO] Module crash:", route, err);
       clear(root);
-      root.appendChild(el("div", { class:"card" }, [
+          const pageRoot = el("div", { class:"page" });
+          root.appendChild(pageRoot);
+          pageRoot.appendChild(el("div", { class:"card" }, [
         el("div", { class:"card__title" }, "Module crash"),
         el("div", { class:"card__sub" }, `Route: ${route}`),
         el("div", { class:"hr" }),

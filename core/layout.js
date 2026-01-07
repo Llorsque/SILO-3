@@ -7,3 +7,8 @@ export function sectionCard({title, subtitle, children=[]}){
     ...children
   ]);
 }
+
+
+export function page(children=[]){
+  return el("div", { class:"page" }, children);
+}
