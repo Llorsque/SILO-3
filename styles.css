@@ -273,3 +273,5 @@ body{
   flex:1;
   font-weight:900;
 }
+
+.pillLabel{font-weight:1000; opacity:.85}

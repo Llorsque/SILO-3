@@ -9,116 +9,6 @@ function chip(label, active, onClick){
   return b;
 }
 
-
-function multiSelectDropdown({ placeholder, options, selectedSet, optionToString, onChange }){
-  const wrap = el("div", { class:"dropdown dropdown--multi" });
-  const btn = el("button", { type:"button", class:"input dropdownBtn" });
-  const list = el("div", { class:"dropdown__list" });
-  const search = el("input", { class:"input dropdownSearch", placeholder: placeholder || "Typ om te zoeken..." });
-
-  let open = false;
-
-  function summary(){
-    if(selectedSet.size === 0) return "All";
-    const arr = Array.from(selectedSet).map(o => optionToString(o));
-    if(arr.length <= 3) return arr.join(", ");
-    return `${arr.length} geselecteerd`;
-  }
-
-  function setOpen(v){
-    open = v;
-    if(open){
-      renderList();
-      list.classList.add("dropdown__list--open");
-      search.focus();
-    }else{
-      list.classList.remove("dropdown__list--open");
-    }
-  }
-
-  function renderList(){
-    btn.textContent = summary();
-
-    // Keep previous scroll
-    const scrollTop = list.scrollTop;
-
-    clear(list);
-    list.appendChild(search);
-
-    const q = (search.value || "").toLowerCase().trim();
-
-    // All toggle row
-    const allRow = el("div", { class:"dropdown__item dropdown__item--check" });
-    const allCheck = el("input", { class:"dropdownCheck", type:"checkbox" });
-    allCheck.checked = selectedSet.size === 0;
-    const allLabel = el("div", { class:"dropdownLabel" }, "All");
-    allRow.appendChild(allCheck);
-    allRow.appendChild(allLabel);
-    allRow.addEventListener("click", (e)=>{
-      e.preventDefault();
-      selectedSet.clear();
-      onChange();
-      // stay open
-      setOpen(true);
-    });
-    list.appendChild(allRow);
-
-    // Options
-    const filtered = options
-      .filter(o => optionToString(o).toLowerCase().includes(q))
-      .slice(0, 200);
-
-    if(!filtered.length){
-      list.appendChild(el("div", { class:"dropdown__item dropdown__item--muted" }, "Geen resultaten"));
-      list.scrollTop = scrollTop;
-      return;
-    }
-
-    for(const opt of filtered){
-      const row = el("div", { class:"dropdown__item dropdown__item--check" });
-      const cb = el("input", { class:"dropdownCheck", type:"checkbox" });
-
-      // If All is active (size 0), show unchecked for specifics
-      cb.checked = selectedSet.size !== 0 && selectedSet.has(opt);
-
-      const lab = el("div", { class:"dropdownLabel" }, optionToString(opt));
-      row.appendChild(cb);
-      row.appendChild(lab);
-
-      row.addEventListener("click", (e)=>{
-        e.preventDefault();
-        if(selectedSet.size === 0){
-          // Start a specific selection
-          selectedSet.add(opt);
-        }else{
-          if(selectedSet.has(opt)) selectedSet.delete(opt);
-          else selectedSet.add(opt);
-        }
-        onChange();
-        setOpen(true);
-      });
-
-      list.appendChild(row);
-    }
-
-    list.scrollTop = scrollTop;
-  }
-
-  btn.addEventListener("click", ()=> setOpen(!open));
-  search.addEventListener("input", ()=> renderList());
-  search.addEventListener("keydown", (e)=>{ if(e.key === "Escape") setOpen(false); });
-
-  document.addEventListener("click", (e)=>{ if(!wrap.contains(e.target)) setOpen(false); });
-
-  wrap.appendChild(btn);
-  wrap.appendChild(list);
-
-  // Initial label
-  btn.textContent = summary();
-
-  return wrap;
-}
-
 function medalIcon(pos){
   if(pos === 1) return "🥇";
   if(pos === 2) return "🥈";
@@ -224,7 +114,7 @@ export async function mountBiography(root){
       .filter(Boolean)
   )).sort((a,b)=>a.localeCompare(b));
 
-  const state = { rider: "", tournaments: new Set(), years: new Set(), distances: new Set(), podium: new Set() };
+  const state = { rider: "", tournaments: new Set(), years: new Set(), distances: new Set(), podium: new Set(), sortBy: "year", sortDir: "desc" };
 
   const header = el("div", { class:"row", style:"align-items:flex-end; gap:12px" }, [
     el("div", null, [
@@ -239,6 +129,7 @@ export async function mountBiography(root){
   const filterCard = el("div", { class:"filtersCard" });
   const profileWrap = el("div", { class:"bioProfileWrap" });
   const resultsFilterWrap = el("div", { class:"filtersCard" });
+  const sortBar = el("div", { class:"row sortBar", style:"gap:10px; align-items:center; flex-wrap:wrap" });
   const resultsWrap = el("div", { class:"tableWrap" });
 
   function findWTNameByNat(nat){
@@ -343,13 +234,10 @@ export async function mountBiography(root){
       el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:260px" }, [
         el("div", { class:"filterLabel" }, "Seizoen"),
-        multiSelectDropdown({
-          placeholder: "Zoek jaar...",
-          options: yOptions,
-          selectedSet: state.years,
-          optionToString: (y)=>String(y),
-          onChange: ()=>render()
-        })
+        el("div", { class:"chipRow" }, [
+          chip("All", state.years.size === 0, ()=>{ state.years.clear(); render(); }),
+          ...yOptions.map(y => chip(String(y), state.years.has(y), ()=>{ if(state.years.has(y)) state.years.delete(y); else state.years.add(y); render(); }))
+        ])
       ]),
       el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:260px" }, [
@@ -373,15 +261,67 @@ export async function mountBiography(root){
 
     resultsFilterWrap.appendChild(rfRow);
 
+    clear(sortBar);
+    sortBar.appendChild(el("div", { class:"pillLabel" }, "Sorteren:"));
+
+    const bySel = el("select", { class:"input", style:"min-width:220px" }, [
+      el("option", { value:"year" }, "Jaar (seizoen)"),
+      el("option", { value:"medals" }, "Medailles (🥇→🥈→🥉)"),
+      el("option", { value:"nat" }, "Nationaliteit"),
+    ]);
+    bySel.value = state.sortBy;
+    bySel.addEventListener("change", ()=>{ state.sortBy = bySel.value; render(); });
+    sortBar.appendChild(bySel);
+
+    const dirSel = el("select", { class:"input", style:"min-width:180px" }, [
+      el("option", { value:"desc" }, "Hoog → laag"),
+      el("option", { value:"asc" }, "Laag → hoog"),
+    ]);
+    dirSel.value = state.sortDir;
+    dirSel.addEventListener("change", ()=>{ state.sortDir = dirSel.value; render(); });
+    sortBar.appendChild(dirSel);
+
+
     const rows = allRiderRows
       .filter(r => (state.tournaments.size ? state.tournaments.has(r.tournament) : true))
       .filter(r => (state.years.size ? state.years.has(r.season) : true))
       .filter(r => (state.distances.size ? state.distances.has(r.distance) : true))
       .filter(r => (state.podium.size ? state.podium.has(r.pos) : true))
       .sort((a,b)=>{
+        const dir = state.sortDir === "asc" ? 1 : -1;
+
+        const medalRank = (pos)=>{
+          if(pos === 1) return 0;
+          if(pos === 2) return 1;
+          if(pos === 3) return 2;
+          return 3;
+        };
+
+        if(state.sortBy === "year"){
+          const ya = a.season || 0;
+          const yb = b.season || 0;
+          if(ya !== yb) return (ya - yb) * dir;
+        }else if(state.sortBy === "medals"){
+          const ra = medalRank(a.pos);
+          const rb = medalRank(b.pos);
+          if(ra !== rb) return ra - rb; // 🥇→🥈→🥉→rest
+        }else if(state.sortBy === "nat"){
+          const na = String(a.nat||"");
+          const nb = String(b.nat||"");
+          if(na !== nb) return na.localeCompare(nb) * dir;
+        }
+
+        // Tie-breakers
+        if((a.season||0)!==(b.season||0)) return ((b.season||0)-(a.season||0));
+        const pa = a.pos ?? 999;
+        const pb = b.pos ?? 999;
+        if(pa !== pb) return pa - pb;
+
         const da = a.dateISO ? new Date(a.dateISO).getTime() : 0;
         const db = b.dateISO ? new Date(b.dateISO).getTime() : 0;
-        return db - da;
+        if(da !== db) return db - da;
+
+        return String(a.tournament||"").localeCompare(String(b.tournament||""));
       });
 
     if(!rows.length){
