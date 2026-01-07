@@ -256,3 +256,20 @@ body{
 .bioNotable{margin-top:6px}
 .bioResultsHeader{display:flex; align-items:center; justify-content:space-between; margin:8px 0 10px}
 .bioResultsTitle{font-weight:1000; color: rgba(255,255,255,.85)}
+
+.dropdown--multi .dropdownBtn{display:flex; align-items:center; justify-content:space-between; cursor:pointer}
+.dropdownSearch{margin-bottom:6px}
+.dropdown__item--check{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.dropdownCheck{
+  width:18px;
+  height:18px;
+  accent-color: var(--accent);
+}
+.dropdownLabel{
+  flex:1;
+  font-weight:900;
+}

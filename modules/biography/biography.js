@@ -9,6 +9,116 @@ function chip(label, active, onClick){
   return b;
 }
 
+
+function multiSelectDropdown({ placeholder, options, selectedSet, optionToString, onChange }){
+  const wrap = el("div", { class:"dropdown dropdown--multi" });
+  const btn = el("button", { type:"button", class:"input dropdownBtn" });
+  const list = el("div", { class:"dropdown__list" });
+  const search = el("input", { class:"input dropdownSearch", placeholder: placeholder || "Typ om te zoeken..." });
+
+  let open = false;
+
+  function summary(){
+    if(selectedSet.size === 0) return "All";
+    const arr = Array.from(selectedSet).map(o => optionToString(o));
+    if(arr.length <= 3) return arr.join(", ");
+    return `${arr.length} geselecteerd`;
+  }
+
+  function setOpen(v){
+    open = v;
+    if(open){
+      renderList();
+      list.classList.add("dropdown__list--open");
+      search.focus();
+    }else{
+      list.classList.remove("dropdown__list--open");
+    }
+  }
+
+  function renderList(){
+    btn.textContent = summary();
+
+    // Keep previous scroll
+    const scrollTop = list.scrollTop;
+
+    clear(list);
+    list.appendChild(search);
+
+    const q = (search.value || "").toLowerCase().trim();
+
+    // All toggle row
+    const allRow = el("div", { class:"dropdown__item dropdown__item--check" });
+    const allCheck = el("input", { class:"dropdownCheck", type:"checkbox" });
+    allCheck.checked = selectedSet.size === 0;
+    const allLabel = el("div", { class:"dropdownLabel" }, "All");
+    allRow.appendChild(allCheck);
+    allRow.appendChild(allLabel);
+    allRow.addEventListener("click", (e)=>{
+      e.preventDefault();
+      selectedSet.clear();
+      onChange();
+      // stay open
+      setOpen(true);
+    });
+    list.appendChild(allRow);
+
+    // Options
+    const filtered = options
+      .filter(o => optionToString(o).toLowerCase().includes(q))
+      .slice(0, 200);
+
+    if(!filtered.length){
+      list.appendChild(el("div", { class:"dropdown__item dropdown__item--muted" }, "Geen resultaten"));
+      list.scrollTop = scrollTop;
+      return;
+    }
+
+    for(const opt of filtered){
+      const row = el("div", { class:"dropdown__item dropdown__item--check" });
+      const cb = el("input", { class:"dropdownCheck", type:"checkbox" });
+
+      // If All is active (size 0), show unchecked for specifics
+      cb.checked = selectedSet.size !== 0 && selectedSet.has(opt);
+
+      const lab = el("div", { class:"dropdownLabel" }, optionToString(opt));
+      row.appendChild(cb);
+      row.appendChild(lab);
+
+      row.addEventListener("click", (e)=>{
+        e.preventDefault();
+        if(selectedSet.size === 0){
+          // Start a specific selection
+          selectedSet.add(opt);
+        }else{
+          if(selectedSet.has(opt)) selectedSet.delete(opt);
+          else selectedSet.add(opt);
+        }
+        onChange();
+        setOpen(true);
+      });
+
+      list.appendChild(row);
+    }
+
+    list.scrollTop = scrollTop;
+  }
+
+  btn.addEventListener("click", ()=> setOpen(!open));
+  search.addEventListener("input", ()=> renderList());
+  search.addEventListener("keydown", (e)=>{ if(e.key === "Escape") setOpen(false); });
+
+  document.addEventListener("click", (e)=>{ if(!wrap.contains(e.target)) setOpen(false); });
+
+  wrap.appendChild(btn);
+  wrap.appendChild(list);
+
+  // Initial label
+  btn.textContent = summary();
+
+  return wrap;
+}
+
 function medalIcon(pos){
   if(pos === 1) return "🥇";
   if(pos === 2) return "🥈";
@@ -233,10 +343,13 @@ export async function mountBiography(root){
       el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:260px" }, [
         el("div", { class:"filterLabel" }, "Seizoen"),
-        el("div", { class:"chipRow" }, [
-          chip("All", state.years.size === 0, ()=>{ state.years.clear(); render(); }),
-          ...yOptions.map(y => chip(String(y), state.years.has(y), ()=>{ if(state.years.has(y)) state.years.delete(y); else state.years.add(y); render(); }))
-        ])
+        multiSelectDropdown({
+          placeholder: "Zoek jaar...",
+          options: yOptions,
+          selectedSet: state.years,
+          optionToString: (y)=>String(y),
+          onChange: ()=>render()
+        })
       ]),
       el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:260px" }, [
