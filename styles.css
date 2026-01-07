@@ -258,40 +258,81 @@ body{
 .bioResultsTitle{font-weight:1000; color: rgba(255,255,255,.85)}
 
 
-/* Champions: medal summary cards */
-.medalSummaryWrap{
+/* A Final presentation */
+.finalPres__controls{
   display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 360px 1fr;
   gap:16px;
-  margin-top:14px;
+  align-items:start;
 }
-.medalCard__title{
-  font-weight:900;
-  font-size:16px;
+@media (max-width: 980px){
+  .finalPres__controls{ grid-template-columns: 1fr; }
+}
+.finalPres__picks{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.finalPres__pickRow{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.finalPres__controlsRight{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.finalPres__nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.finalPres__navLabel{
+  color: var(--muted);
+  font-weight:800;
+  font-size:13px;
+}
+.finalPres__viewer{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:16px;
+}
+@media (max-width: 980px){
+  .finalPres__viewer{ grid-template-columns: 1fr; }
+}
+.finalPres__cardTop{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
   margin-bottom:10px;
-  color: var(--text);
 }
-.medalCard__row{
-  display:flex;
-  gap:14px;
-  align-items:center;
-}
-.medalCard__item{
-  display:flex;
-  gap:8px;
-  align-items:center;
+.finalPres__pos{
   font-weight:900;
-  padding:8px 10px;
-  border-radius:14px;
+  color: var(--muted);
+}
+.finalPres__name{
+  font-weight:1000;
+  font-size:20px;
+  letter-spacing:.2px;
+}
+.finalPres__meta{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.finalPres__metaItem{
   border:1px solid var(--line);
   background: rgba(255,255,255,.02);
+  border-radius:14px;
+  padding:10px;
 }
-.medalCard__num{
-  font-weight:900;
-  font-size:18px;
+.finalPres__sectionTitle{
+  font-weight:1000;
+  margin-bottom:6px;
 }
-.medalCard__sub{
-  margin-top:10px;
-  color: var(--muted);
-  font-size:13px;
+.finalPres__card--empty{
+  opacity:.85;
 }
