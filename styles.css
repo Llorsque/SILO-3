@@ -257,21 +257,41 @@ body{
 .bioResultsHeader{display:flex; align-items:center; justify-content:space-between; margin:8px 0 10px}
 .bioResultsTitle{font-weight:1000; color: rgba(255,255,255,.85)}
 
-.dropdown--multi .dropdownBtn{display:flex; align-items:center; justify-content:space-between; cursor:pointer}
-.dropdownSearch{margin-bottom:6px}
-.dropdown__item--check{
+
+/* Champions: medal summary cards */
+.medalSummaryWrap{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap:16px;
+  margin-top:14px;
+}
+.medalCard__title{
+  font-weight:900;
+  font-size:16px;
+  margin-bottom:10px;
+  color: var(--text);
+}
+.medalCard__row{
   display:flex;
-  gap:10px;
+  gap:14px;
   align-items:center;
 }
-.dropdownCheck{
-  width:18px;
-  height:18px;
-  accent-color: var(--accent);
-}
-.dropdownLabel{
-  flex:1;
+.medalCard__item{
+  display:flex;
+  gap:8px;
+  align-items:center;
   font-weight:900;
+  padding:8px 10px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.02);
 }
-
-.pillLabel{font-weight:1000; opacity:.85}
+.medalCard__num{
+  font-weight:900;
+  font-size:18px;
+}
+.medalCard__sub{
+  margin-top:10px;
+  color: var(--muted);
+  font-size:13px;
+}

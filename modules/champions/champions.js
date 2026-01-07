@@ -123,9 +123,7 @@ export async function mountChampions(root){
     distances: new Set(),    // multi
     sexes: new Set(),        // multi (man/vrouw)
     medals: new Set(),       // multi (1/2/3)
-    rider: "",               // single
-    sortBy: "year",          // year | medals | nat
-    sortDir: "desc"          // asc | desc
+    rider: ""                // single
   };
 
   // Build base years list from dataset seasons
@@ -206,50 +204,13 @@ export async function mountChampions(root){
       const i = tournamentOptions.indexOf(t);
       return i === -1 ? 99 : i;
     };
-    const dir = state.sortDir === "asc" ? 1 : -1;
-
-    const medalRank = (pos)=>{
-      if(pos === 1) return 0;
-      if(pos === 2) return 1;
-      if(pos === 3) return 2;
-      return 3;
-    };
-
     return [...rows].sort((a,b)=>{
-      // Primary sort
-      if(state.sortBy === "year"){
-        const ya = a.season || 0;
-        const yb = b.season || 0;
-        if(ya !== yb) return (ya - yb) * dir;
-      }else if(state.sortBy === "medals"){
-        const ra = medalRank(a.pos);
-        const rb = medalRank(b.pos);
-        if(ra !== rb) return ra - rb; // always 🥇→🥈→🥉→rest
-      }else if(state.sortBy === "nat"){
-        const na = String(a.nat||"");
-        const nb = String(b.nat||"");
-        if(na !== nb) return na.localeCompare(nb) * dir;
-      }
-
-      // Tie-breakers: keep stable, human friendly
       const ta = orderT(a.tournament), tb = orderT(b.tournament);
       if(ta!==tb) return ta-tb;
-
-      // If primary wasn't year, still group by season (desc by default)
-      if((a.season||0)!==(b.season||0)) return ((a.season||0)-(b.season||0)) * (-1);
-
+      if((a.season||0)!==(b.season||0)) return (a.season||0)-(b.season||0);
       if(String(a.distance).localeCompare(String(b.distance))) return String(a.distance).localeCompare(String(b.distance));
       if(String(a.sex).localeCompare(String(b.sex))) return String(a.sex).localeCompare(String(b.sex));
-
-      // For medals sort, keep pos order within same group
-      if((a.pos||99)!==(b.pos||99)) return (a.pos||99)-(b.pos||99);
-
-      // Finally: date (newest first)
-      const da = a.dateISO ? new Date(a.dateISO).getTime() : 0;
-      const db = b.dateISO ? new Date(b.dateISO).getTime() : 0;
-      if(da !== db) return db - da;
-
-      return String(a.skaterName||"").localeCompare(String(b.skaterName||""));
+      return (a.pos||99)-(b.pos||99);
     });
   }
 
@@ -271,14 +232,10 @@ export async function mountChampions(root){
     state.sexes.clear();
     state.medals.clear();
     state.rider = "";
-    state.sortBy = "year";
-    state.sortDir = "desc";
     render();
   });
 
   const summary = el("div", { class:"summaryTitle" }, "");
-
-  const sortBar = el("div", { class:"row sortBar", style:"gap:10px; align-items:center; flex-wrap:wrap" });
 
   const filtersWrap = el("div", { class:"filtersCard" });
 
@@ -387,28 +344,6 @@ export async function mountChampions(root){
     const rSel = state.rider ? `• ${state.rider}` : "";
     summary.textContent = `${tSel.join(" / ")} • ${ySel} • ${dSel} • ${sSel} • ${mSel}${rSel}`;
 
-    // Sorting controls for the overview table
-    clear(sortBar);
-    sortBar.appendChild(el("div", { class:"pillLabel" }, "Sorteren:"));
-
-    const bySel = el("select", { class:"input", style:"min-width:220px" }, [
-      el("option", { value:"year" }, "Jaar (seizoen)"),
-      el("option", { value:"medals" }, "Medailles (🥇→🥈→🥉)"),
-      el("option", { value:"nat" }, "Nationaliteit"),
-    ]);
-    bySel.value = state.sortBy;
-    bySel.addEventListener("change", ()=>{ state.sortBy = bySel.value; render(); });
-    sortBar.appendChild(bySel);
-
-    const dirSel = el("select", { class:"input", style:"min-width:180px" }, [
-      el("option", { value:"desc" }, "Hoog → laag"),
-      el("option", { value:"asc" }, "Laag → hoog"),
-    ]);
-    dirSel.value = state.sortDir;
-    dirSel.addEventListener("change", ()=>{ state.sortDir = dirSel.value; render(); });
-    sortBar.appendChild(dirSel);
-
-
 
     // Medal summary cards (only when a specific rider is selected)
     if(state.rider){
@@ -430,7 +365,7 @@ export async function mountChampions(root){
         }
         for(const t of tournamentsToShow){
           const c = byT.get(t) || { gold:0, silver:0, bronze:0, total:0 };
-          medalSummaryWrap.appendChild(el("div", { class:"medalCard" }, [
+          medalSummaryWrap.appendChild(el("div", { class:"card medalCard" }, [
             el("div", { class:"medalCard__title" }, t),
             el("div", { class:"medalCard__row" }, [
               el("div", { class:"medalCard__item" }, ["🥇", el("span", { class:"medalCard__num" }, String(c.gold))]),
@@ -492,8 +427,6 @@ export async function mountChampions(root){
       medalSummaryWrap,
       el("div", { style:"height:12px" }),
       summary,
-      el("div", { style:"height:8px" }),
-      sortBar,
       el("div", { style:"height:10px" }),
       tableWrap
     ]
