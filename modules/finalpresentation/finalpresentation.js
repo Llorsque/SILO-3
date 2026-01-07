@@ -147,7 +147,8 @@ export async function mountFinalPresentation(root){
 
   function shift(delta){
     const next = state.windowIndex + delta;
-    state.windowIndex = Math.max(0, Math.min(7, next));
+    const maxIndex = 6; // show 2 cards (index and index+1)
+    state.windowIndex = Math.max(0, Math.min(maxIndex, next));
     render();
   }
 
@@ -197,10 +198,8 @@ export async function mountFinalPresentation(root){
 
     const content = [];
 
-    // Top controls
-    const controls = el("div", { class:"finalPres__controls" });
-
-    const picksGrid = el("div", { class:"finalPres__picks" });
+    // Startposities (2 rijen van 4)
+    const picksGrid = el("div", { class:"finalPres__picksGrid" });
     for(let i=0;i<8;i++){
       const label = el("div", { class:"filterLabel" }, `Startpositie ${i+1}`);
       const dd = typeableDropdown({
@@ -209,44 +208,44 @@ export async function mountFinalPresentation(root){
         options: skaterNames,
         onChange: (v)=>{ state.picks[i] = v; render(); }
       });
-
-      const row = el("div", { class:"finalPres__pickRow" }, [label, dd]);
-      picksGrid.appendChild(row);
+      picksGrid.appendChild(el("div", { class:"finalPres__pickCell" }, [label, dd]));
     }
 
-    controls.appendChild(el("div", { class:"finalPres__controlsLeft" }, [
+    const picksCard = el("div", { class:"card finalPres__picksCard" }, [
       el("div", { class:"muted", style:"margin-bottom:10px" }, "Selecteer rijders per startpositie (max 8)."),
       picksGrid
-    ]));
+    ]);
+    content.push(picksCard);
 
-    // Viewer (2 cards + navigation)
+    // Viewer (2 kaarten + navigatie)
+    const navPrev = el("button", {
+      class: state.windowIndex === 0 ? "btn btn--ghost btn--disabled" : "btn btn--ghost",
+      type:"button",
+      onclick: ()=>shift(-1)
+    }, "◀");
+    navPrev.disabled = state.windowIndex === 0;
+
+    const navNext = el("button", {
+      class: state.windowIndex === 6 ? "btn btn--ghost btn--disabled" : "btn btn--ghost",
+      type:"button",
+      onclick: ()=>shift(1)
+    }, "▶");
+    navNext.disabled = state.windowIndex === 6;
+
     const nav = el("div", { class:"finalPres__nav" }, [
-      el("button", {
-        class: state.windowIndex === 0 ? "btn btn--ghost btn--disabled" : "btn btn--ghost",
-        type:"button",
-        disabled: state.windowIndex === 0,
-        onclick: ()=>shift(-1)
-      }, "◀"),
-      el("div", { class:"finalPres__navLabel" }, `Bekijk: startpos ${state.windowIndex+1} & ${Math.min(state.windowIndex+2, 8)}`),
-      el("button", {
-        class: state.windowIndex === 7 ? "btn btn--ghost btn--disabled" : "btn btn--ghost",
-        type:"button",
-        disabled: state.windowIndex === 7,
-        onclick: ()=>shift(1)
-      }, "▶"),
+      navPrev,
+      el("div", { class:"finalPres__navLabel" }, `Startpositie ${state.windowIndex+1} & ${state.windowIndex+2}`),
+      navNext,
     ]);
 
     const viewerGrid = el("div", { class:"finalPres__viewer" }, [
       makeSkaterCard(state.windowIndex),
-      state.windowIndex < 7 ? makeSkaterCard(state.windowIndex+1) : el("div", { class:"card finalPres__card finalPres__card--empty" }, [
-        el("div", { class:"finalPres__cardTop" }, [ el("div", { class:"finalPres__pos" }, "—") ]),
-        el("div", { class:"notice" }, "Geen tweede startpositie in beeld.")
-      ])
+      makeSkaterCard(state.windowIndex+1)
     ]);
 
-    controls.appendChild(el("div", { class:"finalPres__controlsRight" }, [nav, viewerGrid]));
+    const viewerWrap = el("div", { class:"finalPres__viewerWrap" }, [nav, viewerGrid]);
+    content.push(viewerWrap);
 
-    content.push(controls);
 
     // Dataset missing notice
     if(!ds){
