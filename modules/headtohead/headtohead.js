@@ -126,6 +126,67 @@ function computePairwise(rows, a, b){
   return { shared, aWins, bWins, ties };
 }
 
+
+function initials(name){
+  const parts = normalizeSpaces(name).split(" ").filter(Boolean);
+  const a = (parts[0]?.[0] || "").toUpperCase();
+  const b = (parts[parts.length-1]?.[0] || "").toUpperCase();
+  return (a + b) || "•";
+}
+
+function metricRow(label, left, right){
+  return el("div", { class:"h2hBoardRow" }, [
+    el("div", { class:"h2hBoardVal h2hBoardVal--left" }, left),
+    el("div", { class:"h2hBoardLabel" }, label),
+    el("div", { class:"h2hBoardVal h2hBoardVal--right" }, right),
+  ]);
+}
+
+function renderBoard({ container, a, b, rows, showMedals, showPairwise }){
+  clear(container);
+
+  const head = el("div", { class:"h2hBoardHead" }, [
+    el("div", { class:"h2hBoardSide" }, [
+      el("div", { class:"h2hAvatar" }, initials(a)),
+      el("div", {}, [
+        el("div", { class:"h2hBoardName" }, a),
+        el("div", { class:"h2hBoardSub" }, "Rijder A"),
+      ])
+    ]),
+    el("div", { class:"h2hBoardVS" }, "VS"),
+    el("div", { class:"h2hBoardSide h2hBoardSide--right" }, [
+      el("div", {}, [
+        el("div", { class:"h2hBoardName" }, b),
+        el("div", { class:"h2hBoardSub" }, "Rijder B"),
+      ]),
+      el("div", { class:"h2hAvatar" }, initials(b)),
+    ]),
+  ]);
+
+  const body = el("div", { class:"h2hBoardBody" }, []);
+
+  if(showMedals){
+    const ma = computeMedals(rows, a);
+    const mb = computeMedals(rows, b);
+
+    body.appendChild(el("div", { class:"h2hBoardSectionTitle" }, "Medailles (Final A)"));
+    body.appendChild(metricRow("🥇 Goud", String(ma.goud), String(mb.goud)));
+    body.appendChild(metricRow("🥈 Zilver", String(ma.zilver), String(mb.zilver)));
+    body.appendChild(metricRow("🥉 Brons", String(ma.brons), String(mb.brons)));
+  }
+
+  if(showPairwise){
+    const s = computePairwise(rows, a, b);
+    body.appendChild(el("div", { class:"h2hBoardSectionTitle", style:"margin-top:14px" }, "Duel (zelfde uitslag)"));
+    body.appendChild(metricRow("Samen in uitslag", String(s.shared), String(s.shared)));
+    body.appendChild(metricRow("Winst (lager pos. = beter)", String(s.aWins), String(s.bWins)));
+    body.appendChild(metricRow("Gelijk", String(s.ties), String(s.ties)));
+  }
+
+  const board = el("div", { class:"card h2hBoard" }, [ head, body ]);
+  container.appendChild(board);
+}
+
 export async function mountHeadToHead(root){
   clear(root);
 
@@ -322,37 +383,52 @@ export async function mountHeadToHead(root){
       state.riders[i] = "";
     }
 
-    const rows = filteredRows();
-
-    // Summary grid: per rider metrics
+    // Summary / Board
     clear(summary);
+    clear(pairwiseWrap);
+
     if(activeRiders.length < 2){
       summary.appendChild(el("div", { class:"notice" }, "Selecteer minimaal 2 rijders om te vergelijken."));
-    }else{
-      const grid = el("div", { class:"h2hSummaryGrid" });
-      for(const rider of activeRiders){
-        const card = el("div", { class:"card h2hRiderCard" }, [
-          el("div", { class:"h2hRiderName" }, rider)
-        ]);
-
-        if(state.params.medals){
-          const m = computeMedals(rows, rider);
-          card.appendChild(el("div", { class:"h2hMetricTitle" }, "Medailles (Final A)"));
-          card.appendChild(el("div", { class:"h2hMedalsRow" }, [
-            el("div", { class:"h2hMedalPill" }, [el("span", {}, "🥇"), el("span", { class:"h2hNum" }, String(m.goud))]),
-            el("div", { class:"h2hMedalPill" }, [el("span", {}, "🥈"), el("span", { class:"h2hNum" }, String(m.zilver))]),
-            el("div", { class:"h2hMedalPill" }, [el("span", {}, "🥉"), el("span", { class:"h2hNum" }, String(m.brons))]),
-          ]));
-        }
-
-        grid.appendChild(card);
-      }
-      summary.appendChild(grid);
+      return;
     }
 
-    // Pairwise
-    clear(pairwiseWrap);
-    if(activeRiders.length >= 2 && state.params.pairwise){
+    const rows = filteredRows();
+
+    if(activeRiders.length === 2){
+      // Visual head-to-head board (zoals voorbeeldindelingen)
+      renderBoard({
+        container: summary,
+        a: activeRiders[0],
+        b: activeRiders[1],
+        rows,
+        showMedals: !!state.params.medals,
+        showPairwise: !!state.params.pairwise
+      });
+      return;
+    }
+
+    // 3+ rijders: cards + pairwise matrix
+    const grid = el("div", { class:"h2hSummaryGrid" });
+    for(const rider of activeRiders){
+      const card = el("div", { class:"card h2hRiderCard" }, [
+        el("div", { class:"h2hRiderName" }, rider)
+      ]);
+
+      if(state.params.medals){
+        const m = computeMedals(rows, rider);
+        card.appendChild(el("div", { class:"h2hMetricTitle" }, "Medailles (Final A)"));
+        card.appendChild(el("div", { class:"h2hMedalsRow" }, [
+          el("div", { class:"h2hMedalPill" }, [el("span", {}, "🥇"), el("span", { class:"h2hNum" }, String(m.goud))]),
+          el("div", { class:"h2hMedalPill" }, [el("span", {}, "🥈"), el("span", { class:"h2hNum" }, String(m.zilver))]),
+          el("div", { class:"h2hMedalPill" }, [el("span", {}, "🥉"), el("span", { class:"h2hNum" }, String(m.brons))]),
+        ]));
+      }
+
+      grid.appendChild(card);
+    }
+    summary.appendChild(grid);
+
+    if(state.params.pairwise){
       pairwiseWrap.appendChild(el("div", { class:"h2hMetricTitle", style:"margin-bottom:10px" }, "Duel (zelfde uitslag)"));
       const table = el("div", { class:"card h2hPairTable" }, []);
       const header = el("div", { class:"h2hPairRow h2hPairRow--head" }, [
@@ -382,7 +458,6 @@ export async function mountHeadToHead(root){
 
       pairwiseWrap.appendChild(table);
     }
-  }
 
   render();
 }
