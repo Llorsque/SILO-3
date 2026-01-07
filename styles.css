@@ -338,7 +338,7 @@ body{
 }
 
 
-.finalPres__picksCard{ width:100%; }
+.finalPres__picksCard{ width:100%; padding:0; background:transparent; border:none; }
 .finalPres__picksGrid{
   display:grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -357,4 +357,11 @@ body{
   display:flex;
   flex-direction:column;
   gap:12px;
+}
+
+.finalPres__metaLine{
+  color: var(--text);
+  font-weight:800;
+  font-size:14px;
+  margin-top:8px;
 }

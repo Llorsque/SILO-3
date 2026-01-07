@@ -166,19 +166,12 @@ export async function mountFinalPresentation(root){
     }
 
     const wtName = wtMap.get(pick.nat) || "";
-    const metaRow = el("div", { class:"finalPres__meta" }, [
-      el("div", { class:"finalPres__metaItem" }, [
-        el("div", { class:"muted" }, "Land"),
-        el("div", { class:"strong" }, pick.nat || "—")
-      ]),
-      el("div", { class:"finalPres__metaItem" }, [
-        el("div", { class:"muted" }, "WT name"),
-        el("div", { class:"strong" }, wtName || "—")
-      ]),
-      el("div", { class:"finalPres__metaItem" }, [
-        el("div", { class:"muted" }, "Leeftijd"),
-        el("div", { class:"strong" }, (pick.age ?? "—"))
-      ]),
+    const metaRow = el("div", { class:"finalPres__metaLine" }, [
+      el("span", { class:"strong" }, pick.nat || "—"),
+      el("span", { class:"muted" }, " · "),
+      el("span", { class:"strong" }, (wtName || "—")),
+      el("span", { class:"muted" }, " · "),
+      el("span", { class:"strong" }, ((pick.age ?? "—") + " jaar"))
     ]);
 
     return el("div", { class:"card finalPres__card" }, [
@@ -211,7 +204,7 @@ export async function mountFinalPresentation(root){
       picksGrid.appendChild(el("div", { class:"finalPres__pickCell" }, [label, dd]));
     }
 
-    const picksCard = el("div", { class:"card finalPres__picksCard" }, [
+    const picksCard = el("div", { class:"finalPres__picksCard" }, [
       el("div", { class:"muted", style:"margin-bottom:10px" }, "Selecteer rijders per startpositie (max 8)."),
       picksGrid
     ]);
