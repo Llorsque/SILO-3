@@ -258,110 +258,124 @@ body{
 .bioResultsTitle{font-weight:1000; color: rgba(255,255,255,.85)}
 
 
-/* A Final presentation */
-.finalPres__controls{
+/* Head-to-Head */
+.h2hTop{
   display:grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 220px 1fr 1fr;
+  gap:14px;
+  align-items:end;
+}
+@media (max-width: 1100px){
+  .h2hTop{ grid-template-columns: 1fr; }
+}
+.h2hField .label{ margin-bottom:6px; }
+.h2hRiderGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap:14px;
+}
+@media (max-width: 1100px){
+  .h2hRiderGrid{ grid-template-columns: 1fr; }
+}
+
+.h2hMain{
+  display:grid;
+  grid-template-columns: 320px 1fr;
   gap:16px;
   align-items:start;
 }
-@media (max-width: 980px){
-  .finalPres__controls{ grid-template-columns: 1fr; }
+@media (max-width: 1100px){
+  .h2hMain{ grid-template-columns: 1fr; }
 }
-.finalPres__picks{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-.finalPres__pickRow{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-.finalPres__controlsRight{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.finalPres__nav{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-.finalPres__navLabel{
-  color: var(--muted);
-  font-weight:800;
-  font-size:13px;
-}
-.finalPres__viewer{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:16px;
-}
-@media (max-width: 980px){
-  .finalPres__viewer{ grid-template-columns: 1fr; }
-}
-.finalPres__cardTop{
-  display:flex;
-  align-items:baseline;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
-}
-.finalPres__pos{
-  font-weight:900;
-  color: var(--muted);
-}
-.finalPres__name{
-  font-weight:1000;
-  font-size:20px;
-  letter-spacing:.2px;
-}
-.finalPres__meta{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap:10px;
-}
-.finalPres__metaItem{
-  border:1px solid var(--line);
+
+.h2hSidebar{
+  position: sticky;
+  top: 14px;
+  align-self:start;
+  padding:14px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
   background: rgba(255,255,255,.02);
-  border-radius:14px;
-  padding:10px;
 }
-.finalPres__sectionTitle{
-  font-weight:1000;
-  margin-bottom:6px;
+.h2hSideTitle{
+  font-weight: 950;
+  margin-bottom: 10px;
 }
-.finalPres__card--empty{
-  opacity:.85;
+.h2hParam{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:10px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(0,0,0,.12);
+  margin-bottom: 10px;
+  cursor: pointer;
 }
+.h2hParam input{ margin-top: 3px; }
 
-
-.finalPres__picksCard{ width:100%; padding:0; background:transparent; border:none; }
-.finalPres__picksGrid{
+.h2hSummaryGrid{
   display:grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap:12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap:14px;
 }
-@media (max-width: 980px){
-  .finalPres__picksGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.h2hRiderName{
+  font-weight: 950;
+  font-size: 18px;
+  margin-bottom: 10px;
 }
-.finalPres__pickCell{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.finalPres__viewerWrap{
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+.h2hMetricTitle{
+  font-weight: 950;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 6px;
+  margin-bottom: 8px;
 }
 
-.finalPres__metaLine{
+.h2hMedalsRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.h2hMedalPill{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.02);
+  font-weight: 900;
+}
+.h2hNum{
+  font-size: 16px;
+}
+
+.h2hPairTable{
+  padding: 0;
+}
+.h2hPairRow{
+  display:grid;
+  grid-template-columns: 1.5fr 100px 1fr 1fr 100px;
+  gap:10px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  align-items:center;
+}
+.h2hPairRow--head{
+  border-top: none;
+  font-weight: 950;
+  color: var(--muted);
+}
+.h2hPairDuel{
+  font-weight: 900;
+}
+.h2hPairNum{
+  font-weight: 800;
   color: var(--text);
-  font-weight:800;
-  font-size:14px;
-  margin-top:8px;
+}
+@media (max-width: 900px){
+  .h2hPairRow{
+    grid-template-columns: 1fr;
+  }
 }
