@@ -40,14 +40,23 @@ function parseExcelDate(v){
 }
 
 function formatDistance(raw){
-  const s = normalizeSpaces(raw).toLowerCase();
+  const original = normalizeSpaces(raw);
+  const s = original.toLowerCase();
   if(!s) return "";
+
+  // Overall / season standings
   if(s.includes("overall") || s.includes("eindklassement")) return "Eindklassement";
-  if(s.includes("500")) return "500m";
-  if(s.includes("1000")) return "1000m";
-  if(s.includes("1500")) return "1500m";
-  if(s.includes("3000")) return "3000m";
-  return normalizeSpaces(raw);
+
+  // Extract exact distance number (avoid 1500 -> 500 bug)
+  // Supports: "1500 meter", "1.500 meter", "1500m", "1500"
+  const compact = s.replace(/[\s,\.]/g, "");
+  const m = compact.match(/(?:^|[^0-9])(500|1000|1500|3000)(?:[^0-9]|$)/);
+  if(m) return `${m[1]}m`;
+
+  const m2 = s.match(/\b(500|1000|1500|3000)\s*m\b/);
+  if(m2) return `${m2[1]}m`;
+
+  return original;
 }
 
 function formatSex(raw){
