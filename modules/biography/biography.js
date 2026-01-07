@@ -114,7 +114,7 @@ export async function mountBiography(root){
       .filter(Boolean)
   )).sort((a,b)=>a.localeCompare(b));
 
-  const state = { rider: "", tournaments: new Set(), years: new Set(), distances: new Set(), podium: new Set(), sortBy: "date", sortDir: "desc" };
+  const state = { rider: "", tournaments: new Set(), years: new Set(), distances: new Set(), podium: new Set() };
 
   const header = el("div", { class:"row", style:"align-items:flex-end; gap:12px" }, [
     el("div", null, [
@@ -124,7 +124,7 @@ export async function mountBiography(root){
     el("div", { class:"spacer" }),
     el("button", { class:"btn", type:"button" }, "Reset")
   ]);
-  header.querySelector("button").addEventListener("click", ()=>{ state.rider=""; state.tournaments.clear(); state.years.clear(); state.distances.clear(); state.podium.clear(); state.sortBy="date"; state.sortDir="desc"; render(); });
+  header.querySelector("button").addEventListener("click", ()=>{ state.rider=""; state.tournaments.clear(); state.years.clear(); state.distances.clear(); state.podium.clear(); render(); });
 
   const filterCard = el("div", { class:"filtersCard" });
   const profileWrap = el("div", { class:"bioProfileWrap" });
@@ -256,33 +256,7 @@ export async function mountBiography(root){
           chip("🥉", state.podium.has(3), ()=>{ if(state.podium.has(3)) state.podium.delete(3); else state.podium.add(3); render(); }),
         ])
       ])
-    
-      el("div", { class:"divider" }),
-      el("div", { class:"filterGroup", style:"min-width:260px" }, [
-        el("div", { class:"filterLabel" }, "Sorteren"),
-        el("div", { class:"row", style:"gap:10px; align-items:center; flex-wrap:wrap" }, [
-          (() => {
-            const sel = el("select", { class:"input", style:"min-width:220px" }, [
-              el("option", { value:"date" }, "Datum"),
-              el("option", { value:"medals" }, "Medailles (🥇→🥈→🥉)"),
-              el("option", { value:"year" }, "Jaar (seizoen)")
-            ]);
-            sel.value = state.sortBy;
-            sel.addEventListener("change", ()=>{ state.sortBy = sel.value; render(); });
-            return sel;
-          })(),
-          (() => {
-            const sel = el("select", { class:"input", style:"min-width:160px" }, [
-              el("option", { value:"desc" }, "Hoog → laag"),
-              el("option", { value:"asc" }, "Laag → hoog")
-            ]);
-            sel.value = state.sortDir;
-            sel.addEventListener("change", ()=>{ state.sortDir = sel.value; render(); });
-            return sel;
-          })()
-        ])
-      ]),
-]);
+    ]);
 
     resultsFilterWrap.appendChild(rfRow);
 
@@ -292,48 +266,9 @@ export async function mountBiography(root){
       .filter(r => (state.distances.size ? state.distances.has(r.distance) : true))
       .filter(r => (state.podium.size ? state.podium.has(r.pos) : true))
       .sort((a,b)=>{
-        const dir = state.sortDir === "asc" ? 1 : -1;
-
-        if(state.sortBy === "medals"){
-          const rank = (r)=>{
-            if(r.pos === 1) return 0;
-            if(r.pos === 2) return 1;
-            if(r.pos === 3) return 2;
-            return 3;
-          };
-          const ra = rank(a), rb = rank(b);
-          if(ra !== rb) return ra - rb;
-
-          const da = a.dateISO ? new Date(a.dateISO).getTime() : 0;
-          const db = b.dateISO ? new Date(b.dateISO).getTime() : 0;
-          if(da !== db) return db - da;
-
-          return (b.season||0) - (a.season||0);
-        }
-
-        if(state.sortBy === "year"){
-          const ya = a.season || 0;
-          const yb = b.season || 0;
-          if(ya !== yb) return (ya - yb) * dir;
-
-          const pa = a.pos ?? 999;
-          const pb = b.pos ?? 999;
-          if(pa !== pb) return pa - pb;
-
-          const da = a.dateISO ? new Date(a.dateISO).getTime() : 0;
-          const db = b.dateISO ? new Date(b.dateISO).getTime() : 0;
-          return db - da;
-        }
-
         const da = a.dateISO ? new Date(a.dateISO).getTime() : 0;
         const db = b.dateISO ? new Date(b.dateISO).getTime() : 0;
-        if(da !== db) return (da - db) * dir;
-
-        const pa = a.pos ?? 999;
-        const pb = b.pos ?? 999;
-        if(pa !== pb) return pa - pb;
-
-        return String(a.tournament||"").localeCompare(String(b.tournament||""));
+        return db - da;
       });
 
     if(!rows.length){
