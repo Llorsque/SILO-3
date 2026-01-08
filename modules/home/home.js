@@ -11,67 +11,94 @@ function menuBtn(title, desc, route){
   ]);
   const go = () => router.go(route);
   b.addEventListener("click", go);
-  b.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" ") go(); });
+  b.addEventListener("keydown", (e)=>{ if(e.key === "Enter" || e.key === " ") go(); });
   return b;
+}
+
+function showPopup(title, message){
+  const overlay = el("div", { class:"overlay" }, [
+    el("div", { class:"card dialog" }, [
+      el("div", { class:"card__title" }, title),
+      el("div", { class:"card__sub" }, message),
+      el("div", { class:"hr" }),
+      el("div", { class:"row", style:"justify-content:flex-end" }, [
+        el("button", { class:"btn", type:"button" }, "OK")
+      ])
+    ])
+  ]);
+  const btn = overlay.querySelector("button");
+  btn.addEventListener("click", ()=> overlay.remove());
+  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
 }
 
 export function mountHome(root){
   clear(root);
 
-  const meta = loadMeta();
+  // Hidden file input; we only expose the Upload button.
+  const fileInput = el("input", { type:"file", accept:".xlsx,.xls", style:"display:none" });
 
-  const fileInput = el("input", { type:"file", accept:".xlsx,.xls", class:"input" });
-  const btnUpload = el("button", { class:"btn", type:"button" }, "Upload Excel (results)");
-  const btnClear = el("button", { class:"btn", type:"button" }, "Ontkoppel / verwijderen");
-  const status = el("div", { style:"color:var(--muted); font-size:12px" },
-    meta?.rowCount ? `Dataset gekoppeld: ${meta.rowCount.toLocaleString("nl-NL")} rijen (sheet: ${meta.sheetName || "?"})` : "Geen dataset gekoppeld."
-  );
+  const status = el("div", { style:"color:var(--muted); font-size:12px" }, "");
 
+  function refreshStatus(){
+    const meta = loadMeta();
+    status.textContent = meta?.fileName ? meta.fileName : "Geen dataset gekoppeld.";
+  }
+
+  const btnUpload = el("button", { class:"btn", type:"button" }, "Upload Excel");
   btnUpload.addEventListener("click", ()=> fileInput.click());
+
   fileInput.addEventListener("change", async ()=>{
     const f = fileInput.files?.[0];
     if(!f) return;
+
+    btnUpload.disabled = true;
+    btnUpload.textContent = "Uploaden…";
+
     try{
-      await importExcelFile(f);
-      router.go("home");
+      const res = await importExcelFile(f);
+      refreshStatus();
+      showPopup("Dataset gekoppeld", res?.meta?.fileName ? `✅ ${res.meta.fileName}` : "✅ Upload succesvol");
     }catch(err){
-      alert(err?.message || String(err));
+      console.error(err);
+      showPopup("Import mislukt", err?.message || String(err));
     }finally{
+      btnUpload.disabled = false;
+      btnUpload.textContent = "Upload Excel";
       fileInput.value = "";
     }
   });
 
+  const btnClear = el("button", { class:"btn btn--ghost", type:"button" }, "Ontkoppel / verwijderen");
   btnClear.addEventListener("click", async ()=>{
     await clearDataset();
-    router.go("home");
+    refreshStatus();
   });
+
+  refreshStatus();
 
   const controls = el("div", { class:"card", style:"margin-bottom:14px" }, [
     el("div", { class:"card__title" }, "Dataset"),
-    el("div", { class:"card__sub" }, "Upload/ontkoppel (modules vullen we later)."),
     el("div", { class:"hr" }),
-    el("div", { class:"row" }, [
-      fileInput,
-      el("div", { class:"row" }, [btnUpload, btnClear]),
-      el("div", { class:"spacer" }),
-    ]),
+    fileInput,
+    el("div", { class:"row" }, [btnUpload, btnClear]),
     el("div", { style:"height:8px" }),
     status
   ]);
 
   const grid = el("div", { class:"menuGrid" }, [
-    menuBtn("Dashboard", "Nog leeg", "dashboard"),
-    menuBtn("Filters & parameters", "Nog leeg", "filters"),
-    menuBtn("Head-to-Head", "Nog leeg", "headtohead"),
-    menuBtn("Kampioenen", "Nog leeg", "champions"),
-    menuBtn("Biografie", "Nog leeg", "biography"),
-    menuBtn("A Final presentation", "Nog leeg", "finalpresentation"),
+    menuBtn("Dashboard", "Rijder selecteren en kerncijfers in tiles.", "dashboard"),
+    menuBtn("Filters & parameters", "Combineer filters om specifieke data te vinden.", "filters"),
+    menuBtn("Head-to-Head", "Vergelijk rijders en duels in één oogopslag.", "headtohead"),
+    menuBtn("Kampioenen", "Top 3 per toernooi, seizoen, afstand en sekse.", "champions"),
+    menuBtn("Biografie", "Profiel en volledige resultaten per rijder.", "biography"),
+    menuBtn("A Final presentation", "Startposities kiezen en presenteren (2 tegelijk).", "finalpresentation"),
   ]);
 
   root.appendChild(controls);
   root.appendChild(sectionCard({
     title:"Modules",
-    subtitle:"Klik om naar een module te gaan (inhoud volgt later).",
+    subtitle:"Klik om naar een module te gaan.",
     children:[grid]
   }));
 }

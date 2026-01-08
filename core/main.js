@@ -12,20 +12,48 @@ import { mountFinalPresentation } from "../modules/finalpresentation/finalpresen
 
 const root = document.getElementById("appRoot");
 
+const moduleNav = document.getElementById("moduleNav");
+
+const MODULES = [
+  { key:"dashboard", label:"Dashboard" },
+  { key:"filters", label:"Filters" },
+  { key:"headtohead", label:"Head-to-Head" },
+  { key:"champions", label:"Kampioenen" },
+  { key:"biography", label:"Biografie" },
+  { key:"finalpresentation", label:"A Final" },
+];
+
+function updateModuleNav(active){
+  if(!moduleNav) return;
+  clear(moduleNav);
+
+  const isHome = !active || active === "home";
+  const isSettings = active === "settings";
+  if(isHome || isSettings){
+    moduleNav.style.display = "none";
+    return;
+  }
+  moduleNav.style.display = "flex";
+
+  for(const m of MODULES){
+    if(m.key === active) continue;
+    const b = el("button", { class:"btn btn--chip", type:"button" }, m.label);
+    b.addEventListener("click", () => router.go(m.key));
+    moduleNav.appendChild(b);
+  }
+}
+
+
 function safeMount(fn, route){
   return () => {
     try{
-      clear(root);
-      const pageRoot = el("div", { class:"page" });
-      root.appendChild(pageRoot);
-      const out = fn(pageRoot);
+      updateModuleNav(route);
+      const out = fn(root);
       if(out && typeof out.then === "function"){
         out.catch((err) => {
           console.error("[SILO] Module crash (async):", route, err);
           clear(root);
-          const pageRoot = el("div", { class:"page" });
-          root.appendChild(pageRoot);
-          pageRoot.appendChild(el("div", { class:"card" }, [
+          root.appendChild(el("div", { class:"card" }, [
             el("div", { class:"card__title" }, "Module crash"),
             el("div", { class:"card__sub" }, `Route: ${route}`),
             el("div", { class:"hr" }),
@@ -36,9 +64,7 @@ function safeMount(fn, route){
     }catch(err){
       console.error("[SILO] Module crash:", route, err);
       clear(root);
-          const pageRoot = el("div", { class:"page" });
-          root.appendChild(pageRoot);
-          pageRoot.appendChild(el("div", { class:"card" }, [
+      root.appendChild(el("div", { class:"card" }, [
         el("div", { class:"card__title" }, "Module crash"),
         el("div", { class:"card__sub" }, `Route: ${route}`),
         el("div", { class:"hr" }),

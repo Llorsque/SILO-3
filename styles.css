@@ -258,87 +258,32 @@ body{
 .bioResultsTitle{font-weight:1000; color: rgba(255,255,255,.85)}
 
 
-/* Layout System */
-*{ box-sizing:border-box; }
-img, video, canvas{ max-width:100%; height:auto; }
-
-.page{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  width:100%;
-}
-@media (max-width: 700px){
-  .page{ gap:14px; }
-}
-
-.pageHeader{
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:12px;
-}
-.pageTitle{
-  font-size: clamp(20px, 2.2vw, 28px);
-  font-weight: 1000;
-  letter-spacing: -.01em;
-}
-.pageSubtitle{
-  color: var(--muted);
-  margin-top: 4px;
-  font-size: 13px;
-}
-
-.grid{
-  display:grid;
-  gap:14px;
-  align-items:start;
-}
-.grid--2{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.grid--3{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.grid--4{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.grid--auto{ grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-
-@media (max-width: 980px){
-  .grid--4{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .grid--3{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 700px){
-  .grid--4,
-  .grid--3,
-  .grid--2{ grid-template-columns: 1fr; }
-}
-
-.row{
-  display:flex;
-  align-items:center;
+/* Header module quick switch */
+.moduleNav{
+  display:none;
   gap:10px;
   flex-wrap:wrap;
+  align-items:center;
 }
-.row--between{ justify-content:space-between; }
-.row--start{ align-items:flex-start; }
+.btn--chip{
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
 
-.section{
+/* Popup overlay */
+.overlay{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.55);
   display:flex;
-  flex-direction:column;
-  gap:12px;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index: 9999;
 }
-
-.kv{
-  display:grid;
-  grid-template-columns: 160px 1fr;
-  gap:10px 14px;
-}
-@media (max-width: 700px){
-  .kv{ grid-template-columns: 1fr; }
-}
-
-.tableWrap{
-  overflow:auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 18px;
-}
-.dataTable{ min-width: 740px; }
-@media (max-width: 700px){
-  .dataTable{ min-width: 620px; }
+.dialog{
+  max-width: 520px;
+  width: 100%;
 }
