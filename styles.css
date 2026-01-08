@@ -27,6 +27,13 @@ body{
   backdrop-filter: blur(10px);
 }
 
+.topbar__actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+}
+
 .brand__name{font-weight:1000; letter-spacing:.06em; font-size:22px}
 .brand__tag{font-size:12px; color:var(--muted); margin-top:2px}
 
@@ -262,14 +269,20 @@ body{
 .moduleNav{
   display:none;
   gap:10px;
-  flex-wrap:wrap;
   align-items:center;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  max-width: min(720px, 55vw);
+  padding-bottom:2px;
 }
+.moduleNav::-webkit-scrollbar{height:0}
 .btn--chip{
   padding:8px 12px;
   border-radius:999px;
   font-size:12px;
   font-weight:900;
+  line-height:1;
+  white-space:nowrap;
 }
 
 /* Popup overlay */
@@ -286,4 +299,10 @@ body{
 .dialog{
   max-width: 520px;
   width: 100%;
+}
+
+@media (max-width: 720px){
+  .topbar{ padding:12px 14px; }
+  .brand__name{ font-size:20px; }
+  .moduleNav{ flex-wrap:wrap; overflow-x:visible; max-width: 70vw; }
 }
