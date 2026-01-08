@@ -27,13 +27,6 @@ body{
   backdrop-filter: blur(10px);
 }
 
-.topbar__actions{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:12px;
-}
-
 .brand__name{font-weight:1000; letter-spacing:.06em; font-size:22px}
 .brand__tag{font-size:12px; color:var(--muted); margin-top:2px}
 
@@ -265,44 +258,107 @@ body{
 .bioResultsTitle{font-weight:1000; color: rgba(255,255,255,.85)}
 
 
-/* Header module quick switch */
-.moduleNav{
-  display:none;
-  gap:10px;
-  align-items:center;
-  flex-wrap:nowrap;
-  overflow-x:auto;
-  max-width: min(720px, 55vw);
-  padding-bottom:2px;
-}
-.moduleNav::-webkit-scrollbar{height:0}
-.btn--chip{
-  padding:8px 12px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:900;
-  line-height:1;
-  white-space:nowrap;
-}
 
-/* Popup overlay */
-.overlay{
-  position:fixed;
-  inset:0;
-  background: rgba(0,0,0,.55);
+/* Champions filter grid + compact multi-select dropdown */
+.filtersGrid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  align-items:flex-start;
+}
+.filterGroup--wide{min-width: 340px; flex: 2}
+
+.msd{position:relative}
+.msd__btn{
+  width:100%;
   display:flex;
   align-items:center;
-  justify-content:center;
-  padding:18px;
-  z-index: 9999;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background: rgba(0,0,0,.20);
+  color: rgba(255,255,255,.9);
+  font-weight:800;
 }
-.dialog{
-  max-width: 520px;
-  width: 100%;
+.msd__panel{
+  position:absolute;
+  left:0; right:0;
+  top: calc(100% + 8px);
+  border:1px solid var(--line);
+  background: rgba(10,14,24,.96);
+  border-radius:14px;
+  padding:10px;
+  max-height: 280px;
+  overflow:auto;
+  z-index: 50;
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+}
+.msd__top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.msd__hint{font-size:12px; color: rgba(255,255,255,.55); font-weight:700}
+.msd__clear{
+  padding:6px 10px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.85);
+  font-weight:900;
+  cursor:pointer;
+}
+.msd__list{display:flex; flex-direction:column; gap:8px}
+.msd__item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;
+  cursor:pointer;
+}
+.msd__item:hover{background: rgba(255,255,255,.04)}
+.msd__item input{accent-color: var(--accent)}
+.msd__text{font-weight:800; color: rgba(255,255,255,.85)}
+
+/* Sort buttons in table headers */
+.thWrap{display:flex; align-items:center; gap:8px}
+.sortBtn{
+  width:28px; height:24px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background: rgba(255,255,255,.03);
+  color: rgba(255,255,255,.75);
+  font-weight:1000;
+  cursor:pointer;
+}
+.sortBtn--on{
+  border-color: rgba(82,232,232,.35);
+  color: rgba(82,232,232,.95);
+  background: rgba(82,232,232,.10);
 }
 
-@media (max-width: 720px){
-  .topbar{ padding:12px 14px; }
-  .brand__name{ font-size:20px; }
-  .moduleNav{ flex-wrap:wrap; overflow-x:visible; max-width: 70vw; }
+/* Medal summary cards grid */
+.medalSummaryGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap:12px;
 }
+.medalCard{
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.02);
+  border-radius:18px;
+  padding:14px;
+}
+.medalCard__title{font-weight:1000; margin-bottom:8px; color: rgba(255,255,255,.92)}
+.medalCard__row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+.medalCard__count{display:flex; gap:8px; align-items:center; font-weight:1000}
+.medalCard__sub{margin-top:8px; color: rgba(255,255,255,.55); font-weight:800}

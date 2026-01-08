@@ -365,7 +365,7 @@ export async function mountChampions(root){
         }
         for(const t of tournamentsToShow){
           const c = byT.get(t) || { gold:0, silver:0, bronze:0, total:0 };
-          medalSummaryWrap.appendChild(el("div", { class:"card medalCard" }, [
+          medalSummaryWrap.appendChild(el("div", { class:"medalCard" }, [
             el("div", { class:"medalCard__title" }, t),
             el("div", { class:"medalCard__row" }, [
               el("div", { class:"medalCard__item" }, ["🥇", el("span", { class:"medalCard__num" }, String(c.gold))]),
