@@ -16,27 +16,6 @@ function medalIcon(pos){
   return "";
 }
 
-function sortBtn(label, key){
-  const active = state.sortKey === key;
-  const icon = !active ? "⇅" : (state.sortDir === 1 ? "▲" : "▼");
-  const btn = el("button", { type:"button", class:"btn btn--ghost sortBtn", title:`Sorteer ${label}` }, icon);
-  btn.addEventListener("click", ()=>{
-    if(state.sortKey === key){
-      state.sortDir = state.sortDir === 1 ? -1 : 1;
-    }else{
-      state.sortKey = key;
-      state.sortDir = 1;
-    }
-    render();
-  });
-  return btn;
-}
-
-function thSortable(label, key){
-  return el("th", null, el("div", { class:"thWrap" }, [ label, sortBtn(label, key) ]));
-}
-
-
 function fmtDate(iso){
   if(!iso) return "";
   const d = new Date(iso);
@@ -57,62 +36,7 @@ function normalizeSetToggle(set, value){
   else set.add(value);
 }
 
-function typeableDropdown({placeholder, value, options, onChange}
-
-function multiSelectDropdown({ placeholder, options, selected, onToggle, onClear }){
-  const wrap = el("div", { class:"dropdown" });
-  const input = el("input", { class:"input", placeholder, value:"", readonly:true });
-  const list = el("div", { class:"dropdown__list" });
-
-  function label(){
-    if(!selected || selected.size === 0) return placeholder;
-    const arr = Array.from(selected);
-    if(arr.length <= 2) return arr.join(", ");
-    return `${arr[0]}, ${arr[1]} +${arr.length-2}`;
-  }
-
-  let open = false;
-  function setOpen(v){
-    open = v;
-    list.classList.toggle("dropdown__list--open", open);
-    input.classList.toggle("dropdown__open", open);
-  }
-
-  function renderList(){
-    clear(list);
-
-    const allItem = el("div", { class:"dropdown__item" }, [
-      el("input", { type:"checkbox", checked: selected.size === 0, style:"pointer-events:none" }),
-      el("span", { style:"margin-left:10px; font-weight:900" }, "All")
-    ]);
-    allItem.addEventListener("click", ()=>{ onClear?.(); input.value = label(); renderList(); });
-    list.appendChild(allItem);
-
-    for(const opt of options){
-      const checked = selected.has(opt);
-      const item = el("div", { class:"dropdown__item" }, [
-        el("input", { type:"checkbox", checked, style:"pointer-events:none" }),
-        el("span", { style:"margin-left:10px" }, String(opt))
-      ]);
-      item.addEventListener("click", ()=>{
-        onToggle(opt);
-        input.value = label();
-        renderList();
-      });
-      list.appendChild(item);
-    }
-  }
-
-  input.value = label();
-  input.addEventListener("click", (e)=>{ e.stopPropagation(); setOpen(!open); if(!open) return; renderList(); });
-  document.addEventListener("click", ()=> setOpen(false));
-
-  wrap.appendChild(input);
-  wrap.appendChild(list);
-
-  return { wrap };
-}
-){
+function typeableDropdown({placeholder, value, options, onChange}){
   const wrap = el("div", { class:"dropdown" });
   const input = el("input", { class:"input", placeholder, value: value || "" });
   const list = el("div", { class:"dropdown__list" });
@@ -199,10 +123,8 @@ export async function mountChampions(root){
     distances: new Set(),    // multi
     sexes: new Set(),        // multi (man/vrouw)
     medals: new Set(),       // multi (1/2/3)
-    nats: new Set(),         // multi
-    rider: "" ,               // single
-    sortKey: "",
-    sortDir: 1
+    nats: new Set(),         // multi (Nat)
+    rider: ""                // single
   };
 
   // Build base years list from dataset seasons
@@ -242,7 +164,6 @@ export async function mountChampions(root){
       if(state.sexes.size && !state.sexes.has(r.sex)) return false;
       if(state.medals.size && !state.medals.has(r.pos)) return false;
       if(state.rider && r.skaterName !== state.rider) return false;
-      if(state.nats.size && !state.nats.has(String(r.nat||""))) return false;
 
       // champions: top 3 only
       if(!(r.pos === 1 || r.pos === 2 || r.pos === 3)) return false;
@@ -279,50 +200,20 @@ export async function mountChampions(root){
     return Array.from(seen.values());
   }
 
-  
-function sortDisplay(rows){
-    const dir = state.sortDir || 1;
-    const key = state.sortKey || "";
-    const distVal = (d)=>{
-      const s = String(d||"").toLowerCase();
-      const m = s.match(/(\d+)/);
-      if(m) return Number(m[1]);
-      if(s.includes("eind")) return 999999;
-      return 999998;
+  function sortDisplay(rows){
+    const orderT = (t)=> {
+      const i = tournamentOptions.indexOf(t);
+      return i === -1 ? 99 : i;
     };
-    const medalVal = (p)=> (p===1?1:(p===2?2:(p===3?3:99)));
-
-    const base = [...rows];
-
-    // default order (stable)
-    if(!key){
-      const orderT = (t)=> {
-        const i = tournamentOptions.indexOf(t);
-        return i === -1 ? 99 : i;
-      };
-      return base.sort((a,b)=>{
-        const ta = orderT(a.tournament), tb = orderT(b.tournament);
-        if(ta!==tb) return ta-tb;
-        if((a.season||0)!==(b.season||0)) return (a.season||0)-(b.season||0);
-        if(String(a.distance).localeCompare(String(b.distance))) return String(a.distance).localeCompare(String(b.distance));
-        if(String(a.sex).localeCompare(String(b.sex))) return String(a.sex).localeCompare(String(b.sex));
-        return (a.pos||99)-(b.pos||99);
-      });
-    }
-
-    return base.sort((a,b)=>{
-      let av = "", bv = "";
-      if(key === "year"){ av = a.season||0; bv = b.season||0; }
-      else if(key === "distance"){ av = distVal(a.distance); bv = distVal(b.distance); }
-      else if(key === "medal"){ av = medalVal(a.pos); bv = medalVal(b.pos); }
-      else if(key === "tournament"){ av = String(a.tournament||""); bv = String(b.tournament||""); }
-      else if(key === "nat"){ av = String(a.nat||""); bv = String(b.nat||""); }
-      else { av = ""; bv = ""; }
-      if(typeof av === "number" && typeof bv === "number") return (av-bv)*dir;
-      return String(av).localeCompare(String(bv), "nl")*dir;
+    return [...rows].sort((a,b)=>{
+      const ta = orderT(a.tournament), tb = orderT(b.tournament);
+      if(ta!==tb) return ta-tb;
+      if((a.season||0)!==(b.season||0)) return (a.season||0)-(b.season||0);
+      if(String(a.distance).localeCompare(String(b.distance))) return String(a.distance).localeCompare(String(b.distance));
+      if(String(a.sex).localeCompare(String(b.sex))) return String(a.sex).localeCompare(String(b.sex));
+      return (a.pos||99)-(b.pos||99);
     });
   }
-
 
   // UI parts
   const header = el("div", { class:"row", style:"align-items:flex-end; gap:12px" }, [
@@ -342,9 +233,6 @@ function sortDisplay(rows){
     state.sexes.clear();
     state.medals.clear();
     state.rider = "";
-    state.nats.clear();
-    state.sortKey = "";
-    state.sortDir = 1;
     render();
   });
 
@@ -352,7 +240,7 @@ function sortDisplay(rows){
 
   const filtersWrap = el("div", { class:"filtersCard" });
 
-  const medalSummaryWrap = el("div", { class:"medalSummaryGrid" });
+  const medalSummaryWrap = el("div", { class:"medalSummaryWrap" });
   const tableWrap = el("div", { class:"tableWrap" });
 
   function render(){
@@ -368,6 +256,7 @@ function sortDisplay(rows){
       if(state.sexes.size && !state.sexes.has(r.sex)) return false;
       if(state.distances.size && !state.distances.has(r.distance)) return false;
       if(state.years.size && !state.years.has(r.season)) return false;
+      if(state.nats.size && !state.nats.has(r.nat)) return false;
       return true;
     });
 
@@ -375,7 +264,7 @@ function sortDisplay(rows){
     const distances = allDistancesForSelection(baseRows);
 
     const riders = Array.from(new Set(baseRows.map(r => r.skaterName).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-    const nats = Array.from(new Set(baseRows.map(r => r.nat).filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b)));
+    const natOptions = Array.from(new Set(baseRows.map(r => r.nat).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
 
     // Filters layout
     const row1 = el("div", { class:"filtersRow" }, [
@@ -388,24 +277,12 @@ function sortDisplay(rows){
       el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:220px" }, [
         el("div", { class:"filterLabel" }, "Seizoen"),
-        (() => {
-          const selected = new Set(Array.from(state.years).map(v=>String(v)));
-          const dd = multiSelectDropdown({
-            placeholder: "Alle seizoenen",
-            options: years.map(String),
-            selected,
-            onToggle: (val) => {
-              const v = String(val);
-              // store as number where possible
-              const n = Number(v);
-              const store = Number.isFinite(n) ? n : v;
-              normalizeSetToggle(state.years, store);
-              render();
-            },
-            onClear: ()=>{ state.years.clear(); render(); }
-          });
-          return dd.wrap;
-        })()
+        multiSelectDropdown({
+          placeholder: "Alle seizoenen",
+          options: years,
+          selectedSet: state.years,
+          onChange: ()=> render()
+        })
       ])
     ]);
 
@@ -435,26 +312,17 @@ function sortDisplay(rows){
           chip("🥉 Brons", state.medals.has(3), ()=>{ normalizeSetToggle(state.medals, 3); render(); }),
         ])
       ]),
-      
       el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:200px" }, [
         el("div", { class:"filterLabel" }, "Nationaliteit"),
-        (() => {
-          const selected = new Set(Array.from(state.nats).map(String));
-          const dd = multiSelectDropdown({
-            placeholder: "Alle landen",
-            options: nats.map(String),
-            selected,
-            onToggle: (val) => {
-              const v = String(val);
-              normalizeSetToggle(state.nats, v);
-              render();
-            },
-            onClear: ()=>{ state.nats.clear(); render(); }
-          });
-          return dd.wrap;
-        })()
+        multiSelectDropdown({
+          placeholder: "Alle landen",
+          options: natOptions,
+          selectedSet: state.nats,
+          onChange: ()=> render()
+        })
       ]),
+      el("div", { class:"divider" }),
       el("div", { class:"filterGroup", style:"min-width:260px; flex:1" }, [
         el("div", { class:"filterLabel" }, "Rijder"),
         (() => {
@@ -533,13 +401,13 @@ function sortDisplay(rows){
 
     const table = el("table", { class:"dataTable" });
     const thead = el("thead", null, el("tr", null, [
-      thSortable("Toernooi","tournament"),
-      thSortable("Jaar","year"),
-      thSortable("Afstand","distance"),
+      el("th", null, "Toernooi"),
+      el("th", null, "Jaar"),
+      el("th", null, "Afstand"),
       el("th", null, "Pos."),
-      thSortable("Medaille","medal"),
+      el("th", null, "Medaille"),
       el("th", null, "Rijder"),
-      thSortable("Nat","nat"),
+      el("th", null, "Nat"),
       el("th", null, "Locatie"),
       el("th", null, "Datum"),
     ]));
@@ -583,3 +451,100 @@ function sortDisplay(rows){
   root.appendChild(card);
   render();
 }
+
+function multiSelectDropdown({ placeholder, options, selectedSet, onChange }){
+  const wrap = el("div", { class:"dropdown" });
+  const input = el("input", { class:"input", value:"", placeholder, readOnly:true });
+  const list = el("div", { class:"dropdown__list" });
+
+  let open = false;
+  let query = "";
+
+  function summary(){
+    if(!selectedSet || selectedSet.size === 0) return "";
+    const vals = Array.from(selectedSet);
+    if(vals.length <= 3) return vals.join(", ");
+    return `${vals.length} geselecteerd`;
+  }
+
+  function setInput(){
+    const s = summary();
+    input.value = s || "";
+    input.placeholder = placeholder;
+  }
+
+  function renderList(){
+    clear(list);
+
+    const search = el("input", { class:"input", placeholder:"Typ om te zoeken…", value: query });
+    search.addEventListener("input", ()=>{
+      query = search.value.toLowerCase().trim();
+      renderList();
+    });
+    search.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape") setOpen(false);
+    });
+    list.appendChild(el("div", { style:"padding:6px" }, search));
+
+    const allItem = el("div", { class:"dropdown__item dropdown__item--muted" }, "All (leeg = alles)");
+    allItem.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      selectedSet.clear();
+      setInput();
+      renderList();
+      onChange?.();
+    });
+    list.appendChild(allItem);
+
+    const filtered = options.filter(o => !query || String(o).toLowerCase().includes(query));
+    if(!filtered.length){
+      list.appendChild(el("div", { class:"dropdown__item dropdown__item--muted" }, "Geen resultaten"));
+      return;
+    }
+
+    for(const o of filtered){
+      const active = selectedSet.has(o);
+      const it = el("div", { class:"dropdown__item" }, `${active ? "✓ " : ""}${o}`);
+      it.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if(active) selectedSet.delete(o);
+        else selectedSet.add(o);
+        setInput();
+        renderList();
+        onChange?.();
+      });
+      list.appendChild(it);
+    }
+  }
+
+  function setOpen(next){
+    open = next;
+    if(open){
+      renderList();
+      list.classList.add("dropdown__list--open");
+
+      // Close on outside click (one-time listener per open)
+      const onOutside = (e)=>{
+        if(!wrap.contains(e.target)) setOpen(false);
+      };
+      document.addEventListener("click", onOutside, { capture:true, once:true });
+
+      // focus search input
+      setTimeout(()=>{
+        const s = list.querySelector("input");
+        s && s.focus();
+      }, 0);
+    }else{
+      list.classList.remove("dropdown__list--open");
+    }
+  }
+
+  input.addEventListener("click", (e)=>{ e.stopPropagation(); setOpen(!open); });
+  list.addEventListener("click", (e)=> e.stopPropagation());
+
+  setInput();
+  wrap.appendChild(input);
+  wrap.appendChild(list);
+  return wrap;
+}
+
