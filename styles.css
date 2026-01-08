@@ -362,3 +362,47 @@ body{
 .medalCard__row{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
 .medalCard__count{display:flex; gap:8px; align-items:center; font-weight:1000}
 .medalCard__sub{margin-top:8px; color: rgba(255,255,255,.55); font-weight:800}
+
+
+.topbar__actions{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+
+
+/* Header module quick switch */
+.moduleNav{
+  display:none;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+}
+.btn--chip{
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  background: rgba(255,255,255,.03);
+}
+
+
+
+/* Popup overlay */
+.overlay{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index: 9999;
+}
+.dialog{
+  max-width: 520px;
+  width: 100%;
+}
+
