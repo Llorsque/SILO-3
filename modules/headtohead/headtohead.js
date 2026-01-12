@@ -239,7 +239,7 @@ export async function mountHeadToHead(root){
   const top = el("div", { class:"h2hTop" });
 
   // N selector
-  const nSelect = el("select", { class:"input", style:"min-width:200px" }, [
+  const nSelect = el("select", { class:"input input--sm h2hNSelect" }, [
     el("option", { value:"2" }, "2 rijders"),
     el("option", { value:"3" }, "3 rijders"),
     el("option", { value:"4" }, "4 rijders"),
