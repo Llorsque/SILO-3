@@ -79,7 +79,7 @@ function typeableDropdown({placeholder, value, options, onChange}){
 }
 
 function chip(label, active, onClick){
-  const b = el("button", { class: active ? "chip chip--active" : "chip", type:"button" }, label);
+  const b = el("button", { class: active ? "chip chip--active" : "chip", type:"button", "aria-pressed": String(!!active) }, label);
   b.addEventListener("click", onClick);
   return b;
 }
