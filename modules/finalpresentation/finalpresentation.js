@@ -141,11 +141,89 @@ function isEligibleRun(row){
 
 function getTopResults(ds, skaterName){
   const results = Array.isArray(ds?.results) ? ds.results : [];
-  const rows = results.filter(r => r?.skaterName === skaterName && r?.pos != null && r.pos >= 1 && r.pos <= 5 && isEligibleRun(r));
+  // Eligible top results: pos 1..5, and run is Final/Final A, except WC/WT where we only use Eindklassement/Overall.
+  const rows = results.filter(r =>
+    r?.skaterName === skaterName &&
+    r?.pos != null &&
+    r.pos >= 1 &&
+    r.pos <= 5 &&
+    isEligibleRun(r)
+  );
+
+  // Sort: pos first (1 best), then tournament priority (OS > WK > EK > Overall WC/WT > NK), then season desc.
   const ranked = rows
-    .map(r => ({...r, _prio: tournamentPriority(r.tournament), _season: r.season || 0}))
-    .sort((a,b) => ((a.pos||99) - (b.pos||99)) || (a._prio - b._prio) || (b._season - a._season));
-  return ranked.slice(0, 5);
+    .map(r => ({ ...r, _prio: tournamentPriority(r.tournament), _season: Number(r.season) || 0 }))
+    .sort((a,b) =>
+      ((a.pos||99) - (b.pos||99)) ||
+      (a._prio - b._prio) ||
+      (b._season - a._season)
+    );
+
+  // Merge duplicates that only differ by date (or other minor fields) by grouping on pos+tournament+distance.
+  const groups = [];
+  const seen = new Map();
+
+  for(const r of ranked){
+    const t = normalizeSpaces(r.tournament || "");
+    const d = normalizeSpaces(r.distanceRaw || r.distance || "");
+    const key = `${r.pos}|${t}|${d}`;
+    if(!seen.has(key)){
+      const g = {
+        pos: r.pos,
+        tournament: t,
+        distanceRaw: d,
+        years: new Set(),
+      };
+      seen.set(key, g);
+      groups.push(g);
+      if(groups.length >= 5) break;
+    }
+    const g = seen.get(key);
+    if(r.season != null) g.years.add(String(r.season));
+  }
+
+  // Finalize years as sorted list (desc)
+  return groups.map(g => ({
+    pos: g.pos,
+    tournament: g.tournament,
+    distanceRaw: g.distanceRaw,
+    years: Array.from(g.years).sort((a,b)=> (Number(b)||0) - (Number(a)||0)),
+  }));
+}
+
+function countTitles(ds, skaterName){
+  const results = Array.isArray(ds?.results) ? ds.results : [];
+  const rows = results.filter(r =>
+    r?.skaterName === skaterName &&
+    r?.pos === 1 &&
+    // Titles: OS/WK/EK/NK are race medals; only Final/Final A
+    (normalizeSpaces(r?.runKey).toLowerCase() === "final a" || normalizeSpaces(r?.runKey).toLowerCase() === "final")
+  );
+
+  const counts = { OS:0, WK:0, EK:0, NK:0 };
+  const seen = new Set();
+
+  function category(tournament){
+    const tLow = String(tournament ?? "").toLowerCase();
+    if(tLow.includes("olymp")) return "OS";
+    if(tLow.includes("wereld") || tLow.includes("world")) return "WK";
+    if(tLow.includes("europ")) return "EK";
+    if(tLow.includes("neder") || tLow.includes("dutch")) return "NK";
+    return null;
+  }
+
+  for(const r of rows){
+    const cat = category(r.tournament);
+    if(!cat) continue;
+
+    const dist = normalizeSpaces(r.distanceRaw || r.distance || "");
+    const season = String(r.season ?? "");
+    const key = `${cat}|${season}|${dist}`;
+    if(seen.has(key)) continue;
+    seen.add(key);
+    counts[cat] += 1;
+  }
+  return counts;
 }
 
 export async function mountFinalPresentation(root){
@@ -191,19 +269,39 @@ function renderTopResults(pick){
   if(!ds){
     return el("div", { class:"notice" }, "Upload eerst een dataset om resultaten te tonen.");
   }
+
+  const wrap = el("div");
+
+  // Titles summary (only position 1, OS/WK/EK/NK)
+  const titles = countTitles(ds, pick.name);
+  const titlesBox = el("div", { style:"margin-top:2px" }, [
+    el("div", { class:"finalPres__sectionTitle", style:"margin-bottom:8px" }, "Titels (positie 1)"),
+    el("div", { style:"display:flex; gap:10px; flex-wrap:wrap" }, [
+      el("div", { style:"display:flex; gap:6px; align-items:baseline; padding:6px 10px; border:1px solid rgba(255,255,255,.08); border-radius:999px" }, [el("span", { class:"muted" }, "OS"), el("span", { class:"strong" }, `${titles.OS}`)]),
+      el("div", { style:"display:flex; gap:6px; align-items:baseline; padding:6px 10px; border:1px solid rgba(255,255,255,.08); border-radius:999px" }, [el("span", { class:"muted" }, "WK"), el("span", { class:"strong" }, `${titles.WK}`)]),
+      el("div", { style:"display:flex; gap:6px; align-items:baseline; padding:6px 10px; border:1px solid rgba(255,255,255,.08); border-radius:999px" }, [el("span", { class:"muted" }, "EK"), el("span", { class:"strong" }, `${titles.EK}`)]),
+      el("div", { style:"display:flex; gap:6px; align-items:baseline; padding:6px 10px; border:1px solid rgba(255,255,255,.08); border-radius:999px" }, [el("span", { class:"muted" }, "NK"), el("span", { class:"strong" }, `${titles.NK}`)]),
+    ])
+  ]);
+  wrap.appendChild(titlesBox);
+
   if(!lines.length){
-    return el("div", { class:"notice" }, "Geen top-5 resultaten gevonden binnen de prioriteitstoernooien (Final/Final A of Eindklassement).");
+    wrap.appendChild(el("div", { class:"notice", style:"margin-top:10px" }, "Geen top-5 resultaten gevonden binnen de prioriteitstoernooien (Final/Final A of Eindklassement)."));
+    return wrap;
   }
-  const list = el("div", { class:"finalPres__resultsList" });
+
+  const list = el("div", { class:"finalPres__resultsList", style:"margin-top:10px" });
   for(const r of lines){
     const medal = medalEmoji(r.pos);
-    const text = `${r.pos} - ${r.tournament || "—"} - ${(r.distance || r.afstandRaw || "—")} - ${(r.season || "—")} - ${(r.locatie || "—")}`;
+    const yearsText = Array.isArray(r.years) && r.years.length ? r.years.join(", ") : (r.season || "—");
+    const text = `${r.pos} - ${r.tournament || "—"} - ${(r.distanceRaw || "—")} - ${yearsText}`;
     list.appendChild(el("div", { class:"finalPres__resultRow" }, [
       el("span", { class:"finalPres__resultMedal" }, medal ? medal : ""),
       el("span", { class:"finalPres__resultText" }, text)
     ]));
   }
-  return list;
+  wrap.appendChild(list);
+  return wrap;
 }
 
   function makeSkaterCard(posIdx){
