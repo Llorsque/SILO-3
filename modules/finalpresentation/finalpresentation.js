@@ -247,11 +247,16 @@ function getTopResults(ds, skaterName){
 
 function countTitles(ds, skaterName){
   const results = Array.isArray(ds?.results) ? ds.results : [];
+  // IMPORTANT: Titles must be computed from the SAME eligible subset as the
+  // displayed top-results logic, otherwise you can get "WK X" without any
+  // corresponding rows in the list.
+  //
+  // Rule: only OS/WK/EK/NK, only Pos=1, only Final/Final A (case-insensitive).
+  // World Cup/World Tour must NEVER be counted as WK.
   const rows = results.filter(r =>
     r?.skaterName === skaterName &&
     r?.pos === 1 &&
-    // Titles: OS/WK/EK/NK are race medals; only Final/Final A
-    (normalizeSpaces(r?.runKey).toLowerCase() === "final a" || normalizeSpaces(r?.runKey).toLowerCase() === "final")
+    isEligibleRun(r)
   );
 
   const counts = { OS:0, WK:0, EK:0, NK:0 };
@@ -259,10 +264,15 @@ function countTitles(ds, skaterName){
 
   function category(tournament){
     const tLow = String(tournament ?? "").toLowerCase();
+
+    // Explicitly exclude WC/WT from title categories.
+    if(tLow.includes("world cup") || tLow.includes("world tour")) return null;
+
+    // Be strict to prevent false positives like "world cup" being counted as WK.
     if(tLow.includes("olymp")) return "OS";
-    if(tLow.includes("wereld") || tLow.includes("world")) return "WK";
-    if(tLow.includes("europ")) return "EK";
-    if(tLow.includes("neder") || tLow.includes("dutch")) return "NK";
+    if(tLow.includes("wereldkampioenschap") || tLow.includes("world championship")) return "WK";
+    if(tLow.includes("europees kampioenschap") || tLow.includes("european championship") || tLow.includes("europ")) return "EK";
+    if(tLow.includes("nederlands kampioenschap") || tLow.includes("dutch championship") || tLow.includes("neder")) return "NK";
     return null;
   }
 
@@ -272,6 +282,7 @@ function countTitles(ds, skaterName){
 
     const dist = normalizeSpaces(r.distanceRaw || r.distance || "");
     const season = String(r.season ?? "");
+    if(!dist || !season) continue;
     const key = `${cat}|${season}|${dist}`;
     if(seen.has(key)) continue;
     seen.add(key);
