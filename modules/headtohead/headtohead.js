@@ -79,10 +79,86 @@ function typeableDropdown({placeholder, value, options, onChange}){
 }
 
 function chip(label, active, onClick){
-  const b = el("button", { class: active ? "chip chip--active" : "chip", type:"button", "aria-pressed": String(!!active) }, label);
+  const b = el("button", { class: active ? "chip chip--active" : "chip", type:"button" }, label);
   b.addEventListener("click", onClick);
   return b;
 }
+
+function multiCheckDropdown({ options, selectedSet, labelAll="All", placeholder="All", onChange }){
+  // Compact multi-select dropdown with checkboxes (matches global .msd styles)
+  const wrap = el("div", { class:"msd" });
+  const btn = el("button", { class:"msd__btn", type:"button" }, placeholder);
+  const panel = el("div", { class:"msd__panel" });
+  panel.style.display = "none";
+  let open = false;
+
+  function updateLabel(){
+    const n = selectedSet.size;
+    btn.textContent = n===0 ? labelAll : `${n} geselecteerd`;
+  }
+  function setOpen(v){
+    open = v;
+    panel.style.display = open ? "block" : "none";
+  }
+
+  function rebuild(){
+    clear(panel);
+
+    const top = el("div", { class:"msd__top" }, [
+      el("div", { class:"msd__hint" }, "Multi-select • leeg = alles"),
+      el("button", { class:"msd__clear", type:"button" }, "Reset")
+    ]);
+    top.querySelector("button").addEventListener("click", ()=>{
+      selectedSet.clear();
+      updateLabel();
+      onChange?.();
+      rebuild();
+    });
+
+    const list = el("div", { class:"msd__list" });
+
+    // All pseudo item
+    const allItem = el("label", { class:"msd__item" }, [
+      el("input", { type:"checkbox", checked: selectedSet.size===0 }),
+      el("span", { class:"msd__text" }, labelAll)
+    ]);
+    allItem.querySelector("input").addEventListener("change", ()=>{
+      selectedSet.clear();
+      updateLabel();
+      onChange?.();
+      rebuild();
+    });
+    list.appendChild(allItem);
+
+    for(const opt of options){
+      const checked = selectedSet.has(opt);
+      const item = el("label", { class:"msd__item" }, [
+        el("input", { type:"checkbox", checked }),
+        el("span", { class:"msd__text" }, String(opt))
+      ]);
+      item.querySelector("input").addEventListener("change", (e)=>{
+        if(e.target.checked) selectedSet.add(opt); else selectedSet.delete(opt);
+        updateLabel();
+        onChange?.();
+      });
+      list.appendChild(item);
+    }
+
+    panel.appendChild(top);
+    panel.appendChild(list);
+  }
+
+  btn.addEventListener("click", ()=>{ setOpen(!open); });
+  document.addEventListener("click", (e)=>{ if(!wrap.contains(e.target)) setOpen(false); });
+
+  updateLabel();
+  rebuild();
+
+  wrap.appendChild(btn);
+  wrap.appendChild(panel);
+  return wrap;
+}
+
 
 function keySameResult(r){
   // “zelfde uitslag”: zelfde Wedstrijd + Datum + Afstand + Run (Final A/B/Overall etc.)
@@ -101,6 +177,18 @@ function computeMedals(rows, skater){
   }
   return out;
 }
+
+function bestResultPos(rows, skater){
+  // Hoogste uitslag = beste positie (laagste pos) binnen huidige filters
+  let best = null;
+  for(const r of rows){
+    if(r.skaterName !== skater) continue;
+    if(r.pos == null) continue;
+    if(best == null || r.pos < best) best = r.pos;
+  }
+  return best;
+}
+
 
 function computePairwise(rows, a, b){
   // Count shared results where both appear; determine who finished ahead by smaller pos
@@ -180,7 +268,9 @@ function renderBoard({ container, a, b, rows, showMedals, showPairwise }){
     body.appendChild(el("div", { class:"h2hBoardSectionTitle", style:"margin-top:14px" }, "Duel (zelfde uitslag)"));
     body.appendChild(metricRow("Samen in uitslag", String(s.shared), String(s.shared)));
     body.appendChild(metricRow("Winst (lager pos. = beter)", String(s.aWins), String(s.bWins)));
-    body.appendChild(metricRow("Gelijk", String(s.ties), String(s.ties)));
+        const bestA = bestResultPos(rows, a);
+    const bestB = bestResultPos(rows, b);
+    body.appendChild(metricRow("Hoogste uitslag", bestA==null?"-":String(bestA), bestB==null?"-":String(bestB)));
   }
 
   const board = el("div", { class:"card h2hBoard" }, [ head, body ]);
@@ -218,12 +308,15 @@ export async function mountHeadToHead(root){
 
   const tournamentOptions = Array.from(new Set(results.map(r=>normalizeSpaces(r.tournament || r.wedstrijdRaw)).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
   const distanceOptions = Array.from(new Set(results.map(r=>normalizeSpaces(r.distance || r.afstandRaw)).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+  const seasonOptions = Array.from(new Set(results.map(r=>r.season).filter(v=>v!=null))).sort((a,b)=>a-b);
+
 
   const state = {
     n: 2,
     riders: Array(6).fill(""),
     tournaments: new Set(), // empty = all
     distances: new Set(),   // empty = all
+    seasons: new Set(),     // empty = all
     params: {
       medals: true,
       pairwise: true
@@ -239,7 +332,7 @@ export async function mountHeadToHead(root){
   const top = el("div", { class:"h2hTop" });
 
   // N selector
-  const nSelect = el("select", { class:"input input--sm h2hNSelect" }, [
+  const nSelect = el("select", { class:"input", style:"min-width:200px" }, [
     el("option", { value:"2" }, "2 rijders"),
     el("option", { value:"3" }, "3 rijders"),
     el("option", { value:"4" }, "4 rijders"),
@@ -271,8 +364,21 @@ export async function mountHeadToHead(root){
   ]);
   const distanceRow = distanceWrap.querySelector(".chipRow");
 
+
+// Season dropdown (multi)
+const seasonWrap = el("div", { class:"h2hField" }, [
+  el("div", { class:"label" }, "Seizoen"),
+  multiCheckDropdown({
+    options: seasonOptions,
+    selectedSet: state.seasons,
+    labelAll: "All",
+    placeholder: "All",
+    onChange: ()=>render()
+  })
+]);
   top.appendChild(tournamentWrap);
   top.appendChild(distanceWrap);
+  top.appendChild(seasonWrap);
 
   // Rider dropdowns container
   const riderGrid = el("div", { class:"h2hRiderGrid" });
