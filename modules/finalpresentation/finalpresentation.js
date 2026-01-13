@@ -2,6 +2,60 @@ import { el, clear } from "../../core/dom.js";
 import { sectionCard } from "../../core/layout.js";
 import { loadDataset } from "../../core/storage.js";
 
+function injectFinalPresStyles(){
+  const id = "silo-finalpres-styles";
+  if(document.getElementById(id)) return;
+  const style = document.createElement("style");
+  style.id = id;
+  style.textContent = `
+  .finalPres__nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .finalPres__navLabel{
+    flex:1;
+    text-align:center;
+    opacity:.85;
+    letter-spacing:.04em;
+  }
+  .finalPres__nav button{
+    width:44px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+  .finalPres__pos{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-weight:700;
+    line-height:1;
+  }
+  .finalPres__metaBlock{
+    margin-top:6px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-size:0.95rem;
+    opacity:0.9;
+  }
+  .finalPres__metaItem{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  `;
+  document.head.appendChild(style);
+}
+
+
+
 function normalizeSpaces(s){
   return String(s ?? "").replace(/\s+/g, " ").trim();
 }
@@ -227,6 +281,7 @@ function countTitles(ds, skaterName){
 }
 
 export async function mountFinalPresentation(root){
+  injectFinalPresStyles();
   clear(root);
 
   const ds = await loadDataset();
@@ -311,27 +366,25 @@ function renderTopResults(pick){
     if(!pick){
       return el("div", { class:"card finalPres__card finalPres__card--empty" }, [
         el("div", { class:"finalPres__cardTop" }, [
-          el("div", { class:"finalPres__pos" }, `Startpositie ${pos}`),
+          el("div", { class:"finalPres__pos" }, `${pos}`),
         ]),
         el("div", { class:"notice" }, "Nog geen rijder geselecteerd.")
       ]);
     }
 
-    const wtName = wtMap.get(pick.nat) || "";
-    const metaRow = el("div", { class:"finalPres__metaLine" }, [
-      el("span", { class:"strong" }, pick.nat || "—"),
-      el("span", { class:"muted" }, " · "),
-      el("span", { class:"strong" }, (wtName || "—")),
-      el("span", { class:"muted" }, " · "),
-      el("span", { class:"strong" }, ((pick.age ?? "—") + " jaar"))
+    const wtName = wtMap.get(pick.nat) || pick.team || "";
+    const metaBlock = el("div", { class:"finalPres__metaBlock" }, [
+      el("div", { class:"finalPres__metaItem" }, (pick.nat || "—")),
+      el("div", { class:"finalPres__metaItem" }, (wtName || "—")),
+      el("div", { class:"finalPres__metaItem" }, ((pick.age ?? "—") + " jaar")),
     ]);
 
     return el("div", { class:"card finalPres__card" }, [
       el("div", { class:"finalPres__cardTop" }, [
-        el("div", { class:"finalPres__pos" }, `Startpositie ${pos}`),
+        el("div", { class:"finalPres__pos" }, `${pos}`),
         el("div", { class:"finalPres__name" }, pick.name || "—"),
       ]),
-      metaRow,
+      metaBlock,
       el("div", { style:"height:12px" }),
       el("div", { class:"finalPres__sectionTitle" }, "Belangrijkste resultaten"),
       renderTopResults(pick),
