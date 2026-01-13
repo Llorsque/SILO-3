@@ -144,7 +144,7 @@ function getTopResults(ds, skaterName){
   const rows = results.filter(r => r?.skaterName === skaterName && r?.pos != null && r.pos >= 1 && r.pos <= 5 && isEligibleRun(r));
   const ranked = rows
     .map(r => ({...r, _prio: tournamentPriority(r.tournament), _season: r.season || 0}))
-    .sort((a,b) => (a._prio - b._prio) || (b._season - a._season) || ((a.pos||99) - (b.pos||99)));
+    .sort((a,b) => ((a.pos||99) - (b.pos||99)) || (a._prio - b._prio) || (b._season - a._season));
   return ranked.slice(0, 5);
 }
 
