@@ -112,6 +112,40 @@ function buildWtNameMap(wtRows){
     if(nat && wt && !map.has(nat)) map.set(nat, wt);
   }
   return map;
+}function medalEmoji(pos){
+  if(pos === 1) return "🥇";
+  if(pos === 2) return "🥈";
+  if(pos === 3) return "🥉";
+  return "";
+}
+
+function tournamentPriority(name){
+  const low = String(name||"").toLowerCase();
+  if(low.includes("olymp")) return 0;
+  if(low.includes("wereld")) return 1;
+  if(low.includes("europe")) return 2;
+  // Eindklassement/Overall World Cup / World Tour
+  if(low.includes("world cup") || low.includes("world tour")) return 3;
+  if(low.includes("neder")) return 4;
+  return 99;
+}
+
+function isEligibleRun(row){
+  const tLow = String(row?.tournament||"").toLowerCase();
+  const rk = String(row?.runKey || "").toLowerCase();
+  if(tLow.includes("world cup") || tLow.includes("world tour")){
+    return rk === "eindklassement";
+  }
+  return rk === "final a" || rk === "final";
+}
+
+function getTopResults(ds, skaterName){
+  const results = Array.isArray(ds?.results) ? ds.results : [];
+  const rows = results.filter(r => r?.skaterName === skaterName && r?.pos != null && r.pos >= 1 && r.pos <= 5 && isEligibleRun(r));
+  const ranked = rows
+    .map(r => ({...r, _prio: tournamentPriority(r.tournament), _season: r.season || 0}))
+    .sort((a,b) => (a._prio - b._prio) || (b._season - a._season) || ((a.pos||99) - (b.pos||99)));
+  return ranked.slice(0, 5);
 }
 
 export async function mountFinalPresentation(root){
@@ -152,6 +186,26 @@ export async function mountFinalPresentation(root){
     render();
   }
 
+function renderTopResults(pick){
+  const lines = ds ? getTopResults(ds, pick.name) : [];
+  if(!ds){
+    return el("div", { class:"notice" }, "Upload eerst een dataset om resultaten te tonen.");
+  }
+  if(!lines.length){
+    return el("div", { class:"notice" }, "Geen top-5 resultaten gevonden binnen de prioriteitstoernooien (Final/Final A of Eindklassement).");
+  }
+  const list = el("div", { class:"finalPres__resultsList" });
+  for(const r of lines){
+    const medal = medalEmoji(r.pos);
+    const text = `${r.pos} - ${r.tournament || "—"} - ${(r.distance || r.afstandRaw || "—")} - ${(r.season || "—")} - ${(r.locatie || "—")}`;
+    list.appendChild(el("div", { class:"finalPres__resultRow" }, [
+      el("span", { class:"finalPres__resultMedal" }, medal ? medal : ""),
+      el("span", { class:"finalPres__resultText" }, text)
+    ]));
+  }
+  return list;
+}
+
   function makeSkaterCard(posIdx){
     const pos = posIdx + 1;
     const pick = getPick(posIdx);
@@ -182,7 +236,7 @@ export async function mountFinalPresentation(root){
       metaRow,
       el("div", { style:"height:12px" }),
       el("div", { class:"finalPres__sectionTitle" }, "Belangrijkste resultaten"),
-      el("div", { class:"notice" }, "Nog niet ingericht — bepalen we straks samen."),
+      renderTopResults(pick),
     ]);
   }
 
