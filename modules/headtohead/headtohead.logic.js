@@ -1,10 +1,4 @@
 
-/*
- Head-to-Head core logic – STABLE BASE
- Only Results sheet
- FINAL A + Eindklassement only
-*/
-
 export function computeHeadToHead(results, filters, riders) {
   const VALID_RUNS = ['FINAL A', 'EINDKLASSEMENT', 'OVERALL'];
 
@@ -31,15 +25,6 @@ export function computeHeadToHead(results, filters, riders) {
     });
   });
 
-  const participation = {};
-  riders.forEach(r => {
-    const set = new Set();
-    byRider[r].forEach(x => {
-      set.add(`${x.Wedstrijd}-${x.Seizoen}-${x.Afstand}`);
-    });
-    participation[r] = set.size;
-  });
-
   const wins = {};
   riders.forEach(r => wins[r] = 0);
   let sharedCount = 0;
@@ -59,5 +44,5 @@ export function computeHeadToHead(results, filters, riders) {
     }
   });
 
-  return { podium, participation, wins, sharedCount };
+  return { podium, wins, sharedCount };
 }
